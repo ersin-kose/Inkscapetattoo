@@ -10,6 +10,7 @@ import 'dart:math' as math;
 
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'profile_screen.dart';
 
 // Silgi path'i ve boyutunu saklayan sınıf
 class EraserPath {
@@ -447,7 +448,10 @@ class _MainScreenState extends State<MainScreen> {
             onSelected: (String result) async {
               switch (result) {
                 case 'profile':
-                  // TODO: profil ekranı
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  );
                   break;
                 case 'settings':
                   // TODO: ayarlar ekranı
