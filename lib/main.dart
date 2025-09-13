@@ -283,8 +283,11 @@ class _MainScreenState extends State<MainScreen> {
         return;
       }
 
-      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final ui.Image uiImage = await boundary.toImage(pixelRatio: 3.0);
+
+      final byteData = await uiImage.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      );
       if (byteData == null) {
         ScaffoldMessenger.of(
           context,
@@ -292,8 +295,36 @@ class _MainScreenState extends State<MainScreen> {
         return;
       }
 
-      final pngBytes = byteData.buffer.asUint8List();
-      final name = 'inkscape_${DateTime.now().millisecondsSinceEpoch}.png';
+      final bd = await uiImage.toByteData(format: ui.ImageByteFormat.rawRgba);
+      if (bd == null) {
+        /* hata göster */
+        return;
+      }
+
+      final img.Image im = img.Image.fromBytes(
+        width: uiImage.width,
+        height: uiImage.height,
+        bytes: bd.buffer,
+        numChannels: 4,
+        order: img.ChannelOrder.rgba,
+      );
+
+      for (int y = 0; y < im.height; y++) {
+        for (int x = 0; x < im.width; x++) {
+          final p = im.getPixel(x, y);
+          if (p.a != 255) {
+            final a = p.a / 255.0;
+            final r = ((p.r * a) + (255 * (1.0 - a))).round();
+            final g = ((p.g * a) + (255 * (1.0 - a))).round();
+            final b = ((p.b * a) + (255 * (1.0 - a))).round();
+            im.setPixelRgba(x, y, r, g, b, 255);
+          }
+        }
+      }
+
+      final jpgBytes = img.encodeJpg(im, quality: 95);
+      final name = 'inkscape_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
       bool ok = false;
 
       if (Platform.isAndroid) {
@@ -302,7 +333,7 @@ class _MainScreenState extends State<MainScreen> {
 
         final tmpDir = await getTemporaryDirectory();
         final tmpFile = File('${tmpDir.path}/$name');
-        await tmpFile.writeAsBytes(pngBytes);
+        await tmpFile.writeAsBytes(jpgBytes);
 
         final mediaStore = MediaStore();
         final info = await mediaStore.saveFile(
@@ -321,7 +352,7 @@ class _MainScreenState extends State<MainScreen> {
         }
 
         final entity = await PhotoManager.editor.saveImage(
-          pngBytes,
+          jpgBytes,
           filename: name,
           title: 'InkScape',
         );
@@ -424,9 +455,6 @@ class _MainScreenState extends State<MainScreen> {
                 case 'gallery':
                   // TODO: galeri ekranı
                   break;
-                case 'save_gallery':
-                  await _saveToGallery();
-                  break;
               }
             },
             itemBuilder:
@@ -449,13 +477,6 @@ class _MainScreenState extends State<MainScreen> {
                     value: 'gallery',
                     child: Text(
                       'Gallery',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'save_gallery',
-                    child: Text(
-                      'Save to Gallery',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -603,6 +624,7 @@ class _MainScreenState extends State<MainScreen> {
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: double.infinity,
+                        filterQuality: FilterQuality.high,
                       )
                     else
                       Center(
@@ -903,42 +925,80 @@ class _MainScreenState extends State<MainScreen> {
 
                   // Silme modu kontrolü (UNDO/REDO üst sırada)
                   if (_selectedTattooImage != null) ...[
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _isEraserMode = !_isEraserMode;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _isEraserMode ? Colors.red[800] : Colors.grey[700],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        elevation: 3,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isEraserMode ? Icons.brush : Icons.brush_outlined,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _isEraserMode ? 'ERASER ON' : 'ERASER OFF',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _isEraserMode = !_isEraserMode;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                _isEraserMode
+                                    ? Colors.red[800]
+                                    : Colors.grey[700],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
                             ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 3,
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _isEraserMode
+                                    ? Icons.brush
+                                    : Icons.brush_outlined,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _isEraserMode ? 'ERASER ON' : 'ERASER OFF',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _saveToGallery,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[800],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 3,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.camera_alt, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Save to Gallery',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
 
