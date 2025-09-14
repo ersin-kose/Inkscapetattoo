@@ -79,7 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _logout() async {
+  Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('current_user_email');
     setState(() {
@@ -114,12 +114,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Profilim'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: _logout,
-            ),
-          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -150,6 +144,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+              const Spacer(),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _logout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[800],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text('Çıkış Yap'),
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -251,6 +261,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     await prefs.setString('user_$email', password);
+    await prefs.setString('current_user_email', email);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Kayıt başarılı: $email')),

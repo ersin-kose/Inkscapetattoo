@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:media_store_plus/media_store_plus.dart';
@@ -10,6 +11,8 @@ import 'dart:math' as math;
 
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'profile_screen.dart';
 
 // Silgi path'i ve boyutunu saklayan sınıf
@@ -24,28 +27,73 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isLoggedIn = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserEmail = prefs.getString('current_user_email');
+    setState(() {
+      _isLoggedIn = currentUserEmail != null;
+      _isLoading = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'InkScape',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.dark(
-          primary: Colors.grey[800]!,
-          secondary: Colors.grey[600]!,
-          surface: Colors.grey[900]!,
-          background: Colors.black,
-        ),
-        scaffoldBackgroundColor: Colors.black,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.black,
-          elevation: 0,
-        ),
-      ),
-      home: const MainScreen(),
+    if (_isLoading) {
+      return ScreenUtilInit(
+        designSize: const Size(375, 812),
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (context, child) {
+          return const MaterialApp(
+            home: Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        },
+      );
+    }
+
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          title: 'InkScape',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.dark(
+              primary: Colors.grey[800]!,
+              secondary: Colors.grey[600]!,
+              surface: Colors.grey[900]!,
+              background: Colors.black,
+            ),
+            scaffoldBackgroundColor: Colors.black,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.black,
+              elevation: 0,
+            ),
+          ),
+          home: _isLoggedIn ? const ProfileScreen() : const MainScreen(),
+        );
+      },
     );
   }
 }
@@ -66,6 +114,7 @@ class _MainScreenState extends State<MainScreen> {
   Uint8List? _tattooImageBytes; // Önceden yüklenmiş dövme görseli
   final ImagePicker _picker = ImagePicker();
   bool _isProcessing = false;
+  bool _isLoggedIn = false;
 
   // Dövme için transform değerleri
   double _tattooScale = 1.0;
@@ -373,6 +422,31 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserEmail = prefs.getString('current_user_email');
+    setState(() {
+      _isLoggedIn = currentUserEmail != null;
+    });
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('current_user_email');
+    setState(() {
+      _isLoggedIn = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Çıkış yapıldı')),
+    );
+  }
+
+  @override
   void dispose() {
     _repaintNotifier.dispose();
     super.dispose();
@@ -407,8 +481,8 @@ class _MainScreenState extends State<MainScreen> {
                           thumbColor: Colors.red[400],
                           overlayColor: Colors.red[400]?.withOpacity(0.3),
                           trackHeight: 4,
-                          thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 8,
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: 8.r,
                           ),
                         ),
                         child: Slider(
@@ -428,10 +502,10 @@ class _MainScreenState extends State<MainScreen> {
                 )
                 : Transform.translate(
                   offset: const Offset(0, -5),
-                  child: const Text(
+                  child: Text(
                     'INKSCAPE',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 20.sp,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 1,
                     ),
@@ -459,6 +533,73 @@ class _MainScreenState extends State<MainScreen> {
                 case 'gallery':
                   // TODO: galeri ekranı
                   break;
+                case 'help_support':
+                  final Uri emailLaunchUri = Uri(
+                    scheme: 'mailto',
+                    path: 'tattoo11tattoo@gmail.com',
+                    queryParameters: {
+                      'subject': 'InkScape Yardım & Destek'
+                    }
+                  );
+                  await launchUrl(emailLaunchUri);
+                  break;
+                case 'about':
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        backgroundColor: Colors.grey[900],
+                        title: const Text(
+                          'Hakkında',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'InkScape',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              'Versiyon: 1.0.0',
+                              style: TextStyle(color: Colors.grey[300]),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              'InkScape, fotoğraflarınıza dijital dövme uygulaması yapmanızı sağlayan bir uygulamadır. Dövme görsellerini yükleyin, konumlandırın, ölçeklendirin ve silin.',
+                              style: TextStyle(color: Colors.grey[300]),
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              '© 2024 InkScape',
+                              style: TextStyle(color: Colors.grey[400]),
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text(
+                              'Kapat',
+                              style: TextStyle(color: Colors.blue),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  break;
+                case 'logout':
+                  _logout();
+                  break;
               }
             },
             itemBuilder:
@@ -484,6 +625,30 @@ class _MainScreenState extends State<MainScreen> {
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
+                  const PopupMenuItem<String>(
+                    value: 'help_support',
+                    child: Text(
+                      'Yardım & Destek',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'about',
+                    child: Text(
+                      'Hakkında',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  if (_isLoggedIn) ...[
+                    const PopupMenuDivider(),
+                    const PopupMenuItem<String>(
+                      value: 'logout',
+                      child: Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ],
           ),
         ],
@@ -748,15 +913,15 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                             elevation: 3,
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.camera_alt, size: 20),
-                              SizedBox(width: 8),
+                              Icon(Icons.camera_alt, size: 20.sp),
+                              SizedBox(width: 8.w),
                               Text(
                                 'CAMERA',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -777,15 +942,15 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                             elevation: 3,
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.photo_library, size: 20),
-                              SizedBox(width: 8),
+                              Icon(Icons.photo_library, size: 20.sp),
+                              SizedBox(width: 8.w),
                               Text(
                                 'GALLERY',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -807,15 +972,15 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                             elevation: 3,
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.brush, size: 20),
-                              SizedBox(width: 8),
+                              Icon(Icons.brush, size: 20.sp),
+                              SizedBox(width: 8.w),
                               Text(
                                 'TATTOO',
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -839,20 +1004,20 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                               elevation: 3,
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.photo_library, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  'GALLERY',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.photo_library, size: 20.sp),
+                              SizedBox(width: 8.w),
+                              Text(
+                                'GALLERY',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
                           ),
                           ElevatedButton(
                             onPressed: _pickTattooImage,
@@ -868,20 +1033,20 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                               elevation: 3,
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.brush, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  'TATTOO',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.brush, size: 20.sp),
+                              SizedBox(width: 8.w),
+                              Text(
+                                'TATTOO',
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
+                          ),
                           ),
                         ] else ...[
                           ElevatedButton.icon(

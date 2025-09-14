@@ -1,12 +1,10 @@
-# TODO: Kullanıcı Kayıt ve Profil Görüntüleme
+# TODO List for Adding Help & Support Menu Option
 
-## Tamamlanan Adımlar
-- [x] SharedPreferences dependency eklendi
-- [x] User model oluşturuldu (lib/user_model.dart)
-- [x] ProfileScreen güncellendi: Giriş yapılmamışsa giriş formu, giriş yapıldıysa profil bilgileri gösteriliyor
-- [x] RegisterScreen güncellendi: Kayıt sonrası bilgiler SharedPreferences'e kaydediliyor
-- [x] Giriş işlemi: Kayıtlı kullanıcılar kontrol ediliyor
-
-## Yapılacaklar
-- [ ] Test: Kayıt, giriş, profil görüntüleme işlevselliği test edilecek
-- [ ] Gerekirse UI iyileştirmeleri yapılacak
+- [x] Add url_launcher dependency to pubspec.yaml
+- [x] Run flutter pub get to install the dependency
+- [x] Import url_launcher in main.dart
+- [x] Add 'help_support' case to onSelected switch in PopupMenuButton
+- [x] Add 'Yardım & Destek' PopupMenuItem to itemBuilder
+- [x] Remove unused import from profile_screen.dart
+- [x] Fix CocoaPods sync issue by running pod install
+- [x] Add 'Hakkında' menu option with about dialog
