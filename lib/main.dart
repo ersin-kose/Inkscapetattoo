@@ -819,11 +819,11 @@ class _MainScreenState extends State<MainScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.photo_outlined,
-                              size: 60,
-                              color: Colors.grey[600],
-                            ),
+        Icon(
+          Icons.add_to_photos_outlined,
+          size: 50,
+          color: Colors.grey[600],
+        ),
                             const SizedBox(height: 16),
                             Text(
                               'Try tattoo on your photo',
