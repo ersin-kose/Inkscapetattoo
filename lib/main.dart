@@ -459,6 +459,45 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: Transform.translate(
+          offset: const Offset(0, -4),
+          child: IconButton(
+            icon: Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 22.sp,
+            ),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: Colors.grey[900],
+                    title: const Text(
+                      'About InkScape',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    content: const Text(
+                      'InkScape is a digital tattoo application that allows you to apply tattoos to your photos. You can upload tattoo images, position them, scale them, and erase parts as needed.',
+                      style: const TextStyle(color: Color(0xFFBDBDBD)),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text(
+                          'Close',
+                          style: const TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
         title:
             _isEraserMode
                 ? Row(
@@ -505,7 +544,7 @@ class _MainScreenState extends State<MainScreen> {
                   child: Text(
                     'INKSCAPE',
                     style: TextStyle(
-                      fontSize: 20.sp,
+                      fontSize: 16.sp,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 1,
                     ),
@@ -527,12 +566,6 @@ class _MainScreenState extends State<MainScreen> {
                     MaterialPageRoute(builder: (context) => const ProfileScreen()),
                   );
                   break;
-                case 'settings':
-                  // TODO: ayarlar ekranı
-                  break;
-                case 'gallery':
-                  // TODO: galeri ekranı
-                  break;
                 case 'help_support':
                   final Uri emailLaunchUri = Uri(
                     scheme: 'mailto',
@@ -551,7 +584,7 @@ class _MainScreenState extends State<MainScreen> {
                         backgroundColor: Colors.grey[900],
                         title: const Text(
                           'Hakkında',
-                          style: TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white),
                         ),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -566,20 +599,20 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                             ),
                             SizedBox(height: 8.h),
-                            Text(
-                              'Versiyon: 1.0.0',
-                              style: TextStyle(color: Colors.grey[300]),
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              'InkScape, fotoğraflarınıza dijital dövme uygulaması yapmanızı sağlayan bir uygulamadır. Dövme görsellerini yükleyin, konumlandırın, ölçeklendirin ve silin.',
-                              style: TextStyle(color: Colors.grey[300]),
-                            ),
-                            SizedBox(height: 16.h),
-                            Text(
-                              '© 2024 InkScape',
-                              style: TextStyle(color: Colors.grey[400]),
-                            ),
+          Text(
+            'Versiyon: 1.0.0',
+            style: const TextStyle(color: Color(0xFFBDBDBD)),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'InkScape, fotoğraflarınıza dijital dövme uygulaması yapmanızı sağlayan bir uygulamadır. Dövme görsellerini yükleyin, konumlandırın, ölçeklendirin ve silin.',
+            style: const TextStyle(color: Color(0xFFBDBDBD)),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            '© 2024 InkScape',
+            style: const TextStyle(color: Color(0xFF9E9E9E)),
+          ),
                           ],
                         ),
                         actions: [
@@ -589,7 +622,7 @@ class _MainScreenState extends State<MainScreen> {
                             },
                             child: const Text(
                               'Kapat',
-                              style: TextStyle(color: Colors.blue),
+                              style: const TextStyle(color: Colors.blue),
                             ),
                           ),
                         ],
@@ -606,46 +639,32 @@ class _MainScreenState extends State<MainScreen> {
                 (BuildContext context) => <PopupMenuEntry<String>>[
                   const PopupMenuItem<String>(
                     value: 'profile',
-                    child: Text(
+                    child: const Text(
                       'Profile',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'settings',
-                    child: Text(
-                      'Settings',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'gallery',
-                    child: Text(
-                      'Gallery',
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                   const PopupMenuItem<String>(
                     value: 'help_support',
-                    child: Text(
+                    child: const Text(
                       'Yardım & Destek',
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                   const PopupMenuItem<String>(
                     value: 'about',
-                    child: Text(
+                    child: const Text(
                       'Hakkında',
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                   if (_isLoggedIn) ...[
                     const PopupMenuDivider(),
                     const PopupMenuItem<String>(
                       value: 'logout',
-                      child: Text(
+                      child: const Text(
                         'Logout',
-                        style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -661,7 +680,7 @@ class _MainScreenState extends State<MainScreen> {
             child: Container(
               width: double.infinity,
               height: MediaQuery.of(context).size.height * 0.7,
-              decoration: BoxDecoration(color: Colors.grey[900]),
+              decoration: BoxDecoration(color: Colors.black87),
               child: GestureDetector(
                 onScaleStart: (ScaleStartDetails details) {
                   if (details.pointerCount == 1) {
