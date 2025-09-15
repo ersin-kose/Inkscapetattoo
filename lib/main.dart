@@ -909,9 +909,9 @@ class _MainScreenState extends State<MainScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(height: _selectedTattooImage != null ? 10 : 20),
 
                   // Üst buton satırı
                   Row(
