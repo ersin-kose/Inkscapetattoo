@@ -14,6 +14,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'profile_screen.dart';
+import 'premium_screen.dart';
 
 // Silgi path'i ve boyutunu saklayan sınıf
 class EraserPath {
@@ -502,7 +503,7 @@ class _MainScreenState extends State<MainScreen> {
             _isEraserMode
                 ? Row(
                   children: [
-                    Icon(Icons.brush, color: Colors.red[400], size: 20),
+                    Icon(Icons.brush, color: Colors.green[400], size: 20),
                     const SizedBox(width: 8),
                     Text(
                       '${_eraserSize.toInt()}px',
@@ -515,10 +516,10 @@ class _MainScreenState extends State<MainScreen> {
                     Expanded(
                       child: SliderTheme(
                         data: SliderTheme.of(context).copyWith(
-                          activeTrackColor: Colors.red[400],
+                          activeTrackColor: Colors.green[400],
                           inactiveTrackColor: Colors.grey[700],
-                          thumbColor: Colors.red[400],
-                          overlayColor: Colors.red[400]?.withOpacity(0.3),
+                          thumbColor: Colors.green[400],
+                          overlayColor: Colors.green[400]?.withOpacity(0.3),
                           trackHeight: 4,
                           thumbShape: RoundSliderThumbShape(
                             enabledThumbRadius: 8.r,
@@ -564,6 +565,12 @@ class _MainScreenState extends State<MainScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  );
+                  break;
+                case 'premium':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PremiumScreen()),
                   );
                   break;
                 case 'help_support':
@@ -641,6 +648,13 @@ class _MainScreenState extends State<MainScreen> {
                     value: 'profile',
                     child: const Text(
                       'Profile',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'premium',
+                    child: const Text(
+                      'Premium',
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
@@ -855,7 +869,7 @@ class _MainScreenState extends State<MainScreen> {
                                 border:
                                     _isEraserMode
                                         ? Border.all(
-                                          color: Colors.red,
+                                          color: Colors.green[500]!,
                                           width: 2,
                                         )
                                         : null,
@@ -1125,7 +1139,7 @@ class _MainScreenState extends State<MainScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 _isEraserMode
-                                    ? Colors.red[800]
+                                    ? Colors.green[800]
                                     : Colors.grey[700],
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
