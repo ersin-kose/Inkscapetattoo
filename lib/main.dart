@@ -15,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'profile_screen.dart';
 import 'premium_screen.dart';
+import 'storage_keys.dart';
 
 // Silgi path'i ve boyutunu saklayan sınıf
 class EraserPath {
@@ -116,6 +117,10 @@ class _MainScreenState extends State<MainScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isProcessing = false;
   bool _isLoggedIn = false;
+  static const int _freeTattooUsageLimit = 5;
+  int _tattooUsageCount = 0;
+  bool _isPremiumUser = false;
+  DateTime? _premiumExpiration;
 
   // Dövme için transform değerleri
   double _tattooScale = 1.0;
@@ -154,8 +159,17 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _pickTattooImage() async {
+    final canUseTattoo = await _ensureTattooAccess();
+    if (!canUseTattoo) {
+      return;
+    }
+
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
+      if (!_isPremiumUser) {
+        await _incrementTattooUsage();
+      }
+
       setState(() {
         _selectedTattooImage = File(image.path);
         _tattooImageBytes = null; // Önceki görseli temizle
@@ -179,7 +193,7 @@ class _MainScreenState extends State<MainScreen> {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Fotoğraf çözümlenemedi')));
+        ).showSnackBar(const SnackBar(content: Text('Unable to process photo')));
         return;
       }
 
@@ -290,7 +304,7 @@ class _MainScreenState extends State<MainScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Arka plan kaldırıldı'),
+          content: Text('Background removed'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -298,7 +312,7 @@ class _MainScreenState extends State<MainScreen> {
       setState(() => _isProcessing = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -329,7 +343,7 @@ class _MainScreenState extends State<MainScreen> {
               as RenderRepaintBoundary?;
       if (boundary == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kaydedilecek alan bulunamadı')),
+          const SnackBar(content: Text('No capture area found')),
         );
         return;
       }
@@ -342,7 +356,7 @@ class _MainScreenState extends State<MainScreen> {
       if (byteData == null) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Görsel dönüştürülemedi')));
+        ).showSnackBar(const SnackBar(content: Text('Failed to convert image')));
         return;
       }
 
@@ -397,7 +411,7 @@ class _MainScreenState extends State<MainScreen> {
         final perm = await PhotoManager.requestPermissionExtend();
         if (!perm.isAuth) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fotoğraf erişim izni verilmedi')),
+            const SnackBar(content: Text('Photo access permission denied')),
           );
           return;
         }
@@ -412,13 +426,13 @@ class _MainScreenState extends State<MainScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ok ? 'Galeriye kaydedildi ✅' : 'Kaydetme başarısız'),
+          content: Text(ok ? 'Saved to gallery ✅' : 'Save failed'),
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
@@ -436,6 +450,74 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  Future<void> _loadUsageState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final usageCount = prefs.getInt(StorageKeys.tattooUsageCount) ?? 0;
+    final rawExpiry = prefs.getString(StorageKeys.premiumExpiresAt);
+    DateTime? expiry;
+    if (rawExpiry != null) {
+      expiry = DateTime.tryParse(rawExpiry);
+    }
+
+    final bool hasActivePremium =
+        expiry != null && expiry.isAfter(DateTime.now());
+    await prefs.setBool(StorageKeys.premiumFlag, hasActivePremium);
+
+    if (!mounted) return;
+    setState(() {
+      _tattooUsageCount = usageCount;
+      _isPremiumUser = hasActivePremium;
+      _premiumExpiration = expiry;
+    });
+  }
+
+  Future<void> _incrementTattooUsage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final nextCount = _tattooUsageCount + 1;
+    await prefs.setInt(StorageKeys.tattooUsageCount, nextCount);
+    if (!mounted) return;
+    setState(() {
+      _tattooUsageCount = nextCount;
+    });
+  }
+
+  Future<bool> _ensureTattooAccess() async {
+    await _loadUsageState();
+    if (_isPremiumUser) {
+      return true;
+    }
+
+    if (_tattooUsageCount >= _freeTattooUsageLimit) {
+      if (!mounted) return false;
+      String message =
+          'You have reached the free usage limit. Continue with Premium.';
+      if (_premiumExpiration != null &&
+          _premiumExpiration!.isBefore(DateTime.now())) {
+        message =
+            'Your Premium subscription has ended. Renew to continue unlimited usage.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+      await _openPremiumScreen();
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<void> _openPremiumScreen() async {
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PremiumScreen()),
+    );
+    if (!mounted) return;
+    await _loadUsageState();
+  }
+
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('current_user_email');
@@ -443,7 +525,7 @@ class _MainScreenState extends State<MainScreen> {
       _isLoggedIn = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Çıkış yapıldı')),
+      const SnackBar(content: Text('Signed out')),
     );
   }
 
@@ -568,17 +650,14 @@ class _MainScreenState extends State<MainScreen> {
                   );
                   break;
                 case 'premium':
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const PremiumScreen()),
-                  );
+                  await _openPremiumScreen();
                   break;
                 case 'help_support':
                   final Uri emailLaunchUri = Uri(
                     scheme: 'mailto',
                     path: 'tattoo11tattoo@gmail.com',
                     queryParameters: {
-                      'subject': 'InkScape Yardım & Destek'
+                      'subject': 'InkScape Help & Support'
                     }
                   );
                   await launchUrl(emailLaunchUri);
@@ -590,8 +669,8 @@ class _MainScreenState extends State<MainScreen> {
                       return AlertDialog(
                         backgroundColor: Colors.grey[900],
                         title: const Text(
-                          'Hakkında',
-                          style: const TextStyle(color: Colors.white),
+                          'About',
+                          style: TextStyle(color: Colors.white),
                         ),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -606,20 +685,20 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                             ),
                             SizedBox(height: 8.h),
-          Text(
-            'Versiyon: 1.0.0',
-            style: const TextStyle(color: Color(0xFFBDBDBD)),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'InkScape, fotoğraflarınıza dijital dövme uygulaması yapmanızı sağlayan bir uygulamadır. Dövme görsellerini yükleyin, konumlandırın, ölçeklendirin ve silin.',
-            style: const TextStyle(color: Color(0xFFBDBDBD)),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            '© 2024 InkScape',
-            style: const TextStyle(color: Color(0xFF9E9E9E)),
-          ),
+                            Text(
+                              'Version: 1.0.0',
+                              style: TextStyle(color: const Color(0xFFBDBDBD)),
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              'InkScape lets you try digital tattoos on your photos. Upload tattoo designs, position them, scale, and erase as you like.',
+                              style: TextStyle(color: const Color(0xFFBDBDBD)),
+                            ),
+                            SizedBox(height: 16.h),
+                            Text(
+                              '© 2024 InkScape',
+                              style: TextStyle(color: const Color(0xFF9E9E9E)),
+                            ),
                           ],
                         ),
                         actions: [
@@ -628,8 +707,8 @@ class _MainScreenState extends State<MainScreen> {
                               Navigator.of(context).pop();
                             },
                             child: const Text(
-                              'Kapat',
-                              style: const TextStyle(color: Colors.blue),
+                              'Close',
+                              style: TextStyle(color: Colors.blue),
                             ),
                           ),
                         ],
@@ -660,16 +739,16 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   const PopupMenuItem<String>(
                     value: 'help_support',
-                    child: const Text(
-                      'Yardım & Destek',
-                      style: const TextStyle(color: Colors.white),
+                    child: Text(
+                      'Help & Support',
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                   const PopupMenuItem<String>(
                     value: 'about',
-                    child: const Text(
-                      'Hakkında',
-                      style: const TextStyle(color: Colors.white),
+                    child: Text(
+                      'About',
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                   if (_isLoggedIn) ...[

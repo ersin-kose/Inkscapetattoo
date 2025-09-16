@@ -42,40 +42,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Basit doğrulama
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen e-posta ve şifre giriniz')),
+        const SnackBar(content: Text('Please enter your email and password')),
       );
       return;
     }
 
-    // SharedPreferences'ten kullanıcıyı kontrol et
     final prefs = await SharedPreferences.getInstance();
     final storedPassword = prefs.getString('user_$email');
 
     if (storedPassword == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bu e-posta ile kayıtlı kullanıcı bulunamadı')),
+        const SnackBar(content: Text('No account found for this email')),
       );
       return;
     }
 
     if (storedPassword != password) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifre yanlış')),
+        const SnackBar(content: Text('Incorrect password')),
       );
       return;
     }
 
-    // Giriş başarılı, current user'ı kaydet
     await prefs.setString('current_user_email', email);
     setState(() {
       _currentUser = User(email: email, password: password);
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Giriş yapıldı: $email')),
+      SnackBar(content: Text('Logged in as $email')),
     );
   }
 
@@ -86,17 +83,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _currentUser = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Çıkış yapıldı')),
+      const SnackBar(content: Text('Signed out')),
     );
   }
 
   void _goToRegister() {
-    // Kayıt olma sayfasına yönlendirme
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const RegisterScreen()),
     ).then((_) {
-      // Kayıt sonrası geri döndüğünde current user'ı yeniden yükle
       _loadCurrentUser();
     });
   }
@@ -110,10 +105,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (_currentUser != null) {
-      // Profil bilgileri göster
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Profilim'),
+          title: const Text('My Profile'),
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -121,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Kayıt Bilgileriniz',
+                'Your Account Details',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
@@ -132,12 +126,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'E-posta: ${_currentUser!.email}',
+                        'Email: ${_currentUser!.email}',
                         style: const TextStyle(fontSize: 18),
                       ),
                       const SizedBox(height: 10),
                       const Text(
-                        'Şifre: ***',
+                        'Password: ***',
                         style: TextStyle(fontSize: 18),
                       ),
                     ],
@@ -164,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Icon(Icons.logout, size: 20),
                         SizedBox(width: 8),
-                        Text('Çıkış Yap'),
+                        Text('Sign Out'),
                       ],
                     ),
                   ),
@@ -176,10 +170,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    // Giriş formu göster
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Giriş Yap'),
+        title: const Text('Log In'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -188,7 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
-                labelText: 'E-posta',
+                labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -197,7 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextField(
               controller: _passwordController,
               decoration: const InputDecoration(
-                labelText: 'Şifre',
+                labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -210,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: _login,
                 icon: const Icon(Icons.login),
                 label: const Text(
-                  'Giriş Yap',
+                  'Log In',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -233,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: _goToRegister,
                   icon: const Icon(Icons.person_add_alt_1),
                   label: const Text(
-                    'Hesabınız yok mu? Kayıt Ol',
+                    'Need an account? Sign Up',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
@@ -272,25 +265,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen tüm alanları doldurun')),
+        const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
 
     if (password != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifreler eşleşmiyor')),
+        const SnackBar(content: Text('Passwords do not match')),
       );
       return;
     }
 
-    // SharedPreferences'e kaydet
+    // Save user credentials in SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final existingPassword = prefs.getString('user_$email');
 
     if (existingPassword != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bu e-posta zaten kayıtlı')),
+        const SnackBar(content: Text('This email is already registered')),
       );
       return;
     }
@@ -299,7 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     await prefs.setString('current_user_email', email);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Kayıt başarılı: $email')),
+      SnackBar(content: Text('Registration successful: $email')),
     );
 
     Navigator.pop(context);
@@ -309,7 +302,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kayıt Ol'),
+        title: const Text('Sign Up'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -318,7 +311,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
-                labelText: 'E-posta',
+                labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -327,7 +320,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextField(
               controller: _passwordController,
               decoration: const InputDecoration(
-                labelText: 'Şifre',
+                labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -336,7 +329,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             TextField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
-                labelText: 'Şifre Tekrar',
+                labelText: 'Confirm Password',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
@@ -349,7 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: _register,
                 icon: const Icon(Icons.person_add),
                 label: const Text(
-                  'Kayıt Ol',
+                  'Sign Up',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'storage_keys.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({Key? key}) : super(key: key);
@@ -11,6 +12,7 @@ class PremiumScreen extends StatefulWidget {
 class _PremiumScreenState extends State<PremiumScreen> {
   bool _isPremium = false;
   bool _loading = true;
+  DateTime? _premiumExpiration;
 
   @override
   void initState() {
@@ -20,21 +22,50 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Future<void> _loadPremium() async {
     final prefs = await SharedPreferences.getInstance();
+    final rawExpiry = prefs.getString(StorageKeys.premiumExpiresAt);
+    DateTime? expiry;
+    if (rawExpiry != null) {
+      expiry = DateTime.tryParse(rawExpiry);
+    }
+
+    final bool hasActivePremium =
+        expiry != null && expiry.isAfter(DateTime.now());
+    await prefs.setBool(StorageKeys.premiumFlag, hasActivePremium);
+
+    if (!mounted) return;
     setState(() {
-      _isPremium = prefs.getBool('is_premium') ?? false;
+      _isPremium = hasActivePremium;
+      _premiumExpiration = expiry;
       _loading = false;
     });
   }
 
   Future<void> _activatePremium() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_premium', true);
-    setState(() => _isPremium = true);
+    final DateTime expiry = DateTime.now().add(const Duration(days: 30));
+    await prefs.setBool(StorageKeys.premiumFlag, true);
+    await prefs.setString(
+      StorageKeys.premiumExpiresAt,
+      expiry.toIso8601String(),
+    );
+    await prefs.setInt(StorageKeys.tattooUsageCount, 0);
+    if (!mounted) return;
+    setState(() {
+      _isPremium = true;
+      _premiumExpiration = expiry;
+    });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Premium etkinleştirildi. Keyfini çıkarın!')),
+        const SnackBar(content: Text('Premium activated. Enjoy!')),
       );
     }
+  }
+
+  String? _formatExpiration(DateTime? expiry) {
+    if (expiry == null) return null;
+    final day = expiry.day.toString().padLeft(2, '0');
+    final month = expiry.month.toString().padLeft(2, '0');
+    return '$day.$month.${expiry.year}';
   }
 
   @override
@@ -48,6 +79,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final tsf = MediaQuery.of(context).textScaleFactor;
     final double heroMinHeight = 200 + (40 * (tsf - 1.0)).clamp(0, 80);
+    final formattedExpiry = _formatExpiration(_premiumExpiration);
+    final bool hasExpiredPremium = !_isPremium && _premiumExpiration != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -58,9 +91,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Hero bölüm (modern gradient)
             Container(
-              // Yüksekliği esnek: büyük yazı boyutlarında taşma olmasın
               constraints: BoxConstraints(minHeight: heroMinHeight),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
@@ -75,7 +106,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               child: Stack(
                 children: [
-                  // Arka plan dekoru (daha küçük ve daha az bindirme yapacak şekilde konumlandırıldı)
                   Positioned(
                     right: -10,
                     top: -10,
@@ -102,7 +132,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         ),
                         SizedBox(height: 10),
                         Text(
-                          'Sınırsızca yarat. Filigransız kaydet.\nAylık sadece 1\$',
+                          'Create without limits. Save without watermarks.\nOnly 1\$/month',
                           textAlign: TextAlign.left,
                           maxLines: 3,
                           softWrap: true,
@@ -122,7 +152,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
             const SizedBox(height: 20),
 
-            // Özellikler
             Card(
               color: colorScheme.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -135,7 +164,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       children: const [
                         Icon(Icons.check_circle, color: Colors.greenAccent),
                         SizedBox(width: 10),
-                        Expanded(child: Text('Sınırsız dövme denemesi ve kaydetme')),
+                        Expanded(child: Text('Unlimited tattoo trials and saves')),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -143,7 +172,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       children: const [
                         Icon(Icons.check_circle, color: Colors.greenAccent),
                         SizedBox(width: 10),
-                        Expanded(child: Text('Filigran olmadan dışa aktarma')),
+                        Expanded(child: Text('Export without watermarks')),
                       ],
                     ),
                     const SizedBox(height: 10),
@@ -151,7 +180,15 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       children: const [
                         Icon(Icons.check_circle, color: Colors.greenAccent),
                         SizedBox(width: 10),
-                        Expanded(child: Text('Öncelikli destek ve yeni özellikler')),
+                        Expanded(child: Text('Realistic background-free tattoo collection')),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: const [
+                        Icon(Icons.check_circle, color: Colors.greenAccent),
+                        SizedBox(width: 10),
+                        Expanded(child: Text('Priority support and new features')),
                       ],
                     ),
                   ],
@@ -161,7 +198,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
             const SizedBox(height: 16),
 
-            // Fiyat kutusu + CTA
             Card(
               color: colorScheme.surface,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -174,7 +210,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: const [
                         Text(
-                          'Aylık',
+                          'Monthly',
                           style: TextStyle(fontSize: 16, color: Color(0xFFBDBDBD)),
                         ),
                         Text('\$1',
@@ -187,9 +223,30 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       isPremium: _isPremium,
                       onTap: _activatePremium,
                     ),
+                    if (_isPremium && formattedExpiry != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Your Premium membership is active until $formattedExpiry.',
+                        style: const TextStyle(fontSize: 14, color: Colors.white),
+                        textAlign: TextAlign.center,
+                      ),
+                    ] else if (hasExpiredPremium && formattedExpiry != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'Your Premium subscription ended on $formattedExpiry.',
+                        style: const TextStyle(fontSize: 14, color: Color(0xFFBDBDBD)),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Subscribe again to regain unlimited access.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     const Text(
-                      'Bu ekran demo amaçlıdır. Gerçek sürümde App Store üzerinden abonelik sunulur.',
+                      'This screen is for demo purposes. Real subscriptions are handled via the App Store.',
                       style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
                       textAlign: TextAlign.center,
                     ),
@@ -229,7 +286,7 @@ class _SubscribeButton extends StatelessWidget {
             children: [
               Icon(Icons.verified, color: Colors.white),
               SizedBox(width: 8),
-              Text('Premium aktif',
+              Text('Premium active',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -247,7 +304,7 @@ class _SubscribeButton extends StatelessWidget {
         onPressed: onTap,
         icon: const Icon(Icons.star_rate_rounded),
         label: const Text(
-          "Premium'a Geç (1 \$/ay)",
+          'Go Premium (1 \$/mo)',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
