@@ -16,6 +16,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'profile_screen.dart';
 import 'premium_screen.dart';
 import 'storage_keys.dart';
+import 'services/premium_access.dart';
 
 // Silgi path'i ve boyutunu saklayan sınıf
 class EraserPath {
@@ -25,7 +26,9 @@ class EraserPath {
   EraserPath({required this.path, required this.strokeWidth});
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await PremiumAccess.instance.init();
   runApp(const MyApp());
 }
 
@@ -453,21 +456,16 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _loadUsageState() async {
     final prefs = await SharedPreferences.getInstance();
     final usageCount = prefs.getInt(StorageKeys.tattooUsageCount) ?? 0;
-    final rawExpiry = prefs.getString(StorageKeys.premiumExpiresAt);
-    DateTime? expiry;
-    if (rawExpiry != null) {
-      expiry = DateTime.tryParse(rawExpiry);
-    }
 
-    final bool hasActivePremium =
-        expiry != null && expiry.isAfter(DateTime.now());
-    await prefs.setBool(StorageKeys.premiumFlag, hasActivePremium);
+    // RevenueCat üzerinden premium bilgisini güncelle
+    final bool hasRcPremium = await PremiumAccess.instance.refreshEntitlementActive();
+    await prefs.setBool(StorageKeys.premiumFlag, hasRcPremium);
 
     if (!mounted) return;
     setState(() {
       _tattooUsageCount = usageCount;
-      _isPremiumUser = hasActivePremium;
-      _premiumExpiration = expiry;
+      _isPremiumUser = hasRcPremium;
+      _premiumExpiration = null; // RC yönettiği için lokal tarih tutulmuyor
     });
   }
 

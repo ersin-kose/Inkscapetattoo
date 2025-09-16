@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'storage_keys.dart';
+import 'services/premium_access.dart';
+import 'revenuecat_keys.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({Key? key}) : super(key: key);
@@ -13,6 +16,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
   bool _isPremium = false;
   bool _loading = true;
   DateTime? _premiumExpiration;
+  String? _priceString;
+  Package? _monthlyPackage;
 
   @override
   void initState() {
@@ -21,42 +26,52 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   Future<void> _loadPremium() async {
-    final prefs = await SharedPreferences.getInstance();
-    final rawExpiry = prefs.getString(StorageKeys.premiumExpiresAt);
-    DateTime? expiry;
-    if (rawExpiry != null) {
-      expiry = DateTime.tryParse(rawExpiry);
+    // RevenueCat üzerinden güncel durumu oku
+    final hasRcPremium = await PremiumAccess.instance.refreshEntitlementActive();
+
+    // Fiyat bilgisini oku
+    final pkg = await PremiumAccess.instance.getMonthlyPackage();
+    String? price = pkg?.storeProduct.priceString;
+    // RC offerings boş ise doğrudan ürün kimliğinden fiyat çekmeyi dene
+    if (price == null && rcMonthlyProductId.isNotEmpty && !rcMonthlyProductId.startsWith('REPLACE')) {
+      try {
+        final prods = await Purchases.getProducts([rcMonthlyProductId]);
+        if (prods.isNotEmpty) {
+          price = prods.first.priceString;
+        }
+      } catch (_) {}
     }
 
-    final bool hasActivePremium =
-        expiry != null && expiry.isAfter(DateTime.now());
-    await prefs.setBool(StorageKeys.premiumFlag, hasActivePremium);
+    // Eski yerel flagleri geriye dönük uyumluluk için güncelleyelim
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(StorageKeys.premiumFlag, hasRcPremium);
 
     if (!mounted) return;
     setState(() {
-      _isPremium = hasActivePremium;
-      _premiumExpiration = expiry;
+      _isPremium = hasRcPremium;
+      _monthlyPackage = pkg;
+      _priceString = price;
       _loading = false;
     });
   }
 
   Future<void> _activatePremium() async {
-    final prefs = await SharedPreferences.getInstance();
-    final DateTime expiry = DateTime.now().add(const Duration(days: 30));
-    await prefs.setBool(StorageKeys.premiumFlag, true);
-    await prefs.setString(
-      StorageKeys.premiumExpiresAt,
-      expiry.toIso8601String(),
-    );
-    await prefs.setInt(StorageKeys.tattooUsageCount, 0);
+    final (ok, msg) = await PremiumAccess.instance.purchaseMonthly();
     if (!mounted) return;
-    setState(() {
-      _isPremium = true;
-      _premiumExpiration = expiry;
-    });
-    if (mounted) {
+    if (ok) {
+      // Kullanım sayacını sıfırlayalım
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(StorageKeys.tattooUsageCount, 0);
+      setState(() {
+        _isPremium = true;
+        _premiumExpiration = null; // RC yönetiyor
+      });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Premium activated. Enjoy!')),
+        const SnackBar(content: Text('Premium aktif! Keyfini çıkarın.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg ?? 'Satın alma başarısız')),
       );
     }
   }
@@ -80,7 +95,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     final tsf = MediaQuery.of(context).textScaleFactor;
     final double heroMinHeight = 200 + (40 * (tsf - 1.0)).clamp(0, 80);
     final formattedExpiry = _formatExpiration(_premiumExpiration);
-    final bool hasExpiredPremium = !_isPremium && _premiumExpiration != null;
+    final bool hasExpiredPremium = false; // RC ile süreyi biz tutmuyoruz
 
     return Scaffold(
       appBar: AppBar(
@@ -208,13 +223,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           'Monthly',
                           style: TextStyle(fontSize: 16, color: Color(0xFFBDBDBD)),
                         ),
-                        Text('\$1',
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                        Text(
+                          _priceString ?? '\$1',
+                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -222,6 +238,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     _SubscribeButton(
                       isPremium: _isPremium,
                       onTap: _activatePremium,
+                      priceText: _priceString,
                     ),
                     if (_isPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
@@ -245,10 +262,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       ),
                     ],
                     const SizedBox(height: 8),
-                    const Text(
-                      'This screen is for demo purposes. Real subscriptions are handled via the App Store.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
-                      textAlign: TextAlign.center,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            final (ok, msg) = await PremiumAccess.instance.restorePurchases();
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(ok ? 'Satın alımlar geri yüklendi' : (msg ?? 'Geri yükleme başarısız'))),
+                            );
+                            if (ok) setState(() => _isPremium = true);
+                          },
+                          child: const Text('Restore Purchases'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -264,11 +292,13 @@ class _PremiumScreenState extends State<PremiumScreen> {
 class _SubscribeButton extends StatelessWidget {
   final bool isPremium;
   final VoidCallback onTap;
+  final String? priceText;
 
   const _SubscribeButton({
     Key? key,
     required this.isPremium,
     required this.onTap,
+    this.priceText,
   }) : super(key: key);
 
   @override
@@ -303,9 +333,9 @@ class _SubscribeButton extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: const Icon(Icons.star_rate_rounded),
-        label: const Text(
-          'Go Premium (1 \$/mo)',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        label: Text(
+          'Go Premium (${priceText ?? '1 \$/mo'})',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFFA000), // amber tone

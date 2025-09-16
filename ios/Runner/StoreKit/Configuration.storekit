@@ -1,0 +1,21 @@
+{
+  "identifier": "InkScape StoreKit Config",
+  "schemaVersion": "2.1",
+  "products": [
+    {
+      "displayName": "Premium Monthly",
+      "productIdentifier": "tattooai_premium_monthly",
+      "productType": "Auto-Renewable Subscription",
+      "prices": [
+        { "id": "price_usd", "value": 1.0, "currency": "USD" }
+      ],
+      "subscription": {
+        "group": "Default",
+        "duration": "P1M"
+      }
+    }
+  ],
+  "subscriptionGroups": [
+    { "referenceName": "Default", "id": "group.default" }
+  ]
+}
