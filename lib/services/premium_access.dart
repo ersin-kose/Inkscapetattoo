@@ -39,7 +39,8 @@ class PremiumAccess {
     await Purchases.configure(config);
 
     Purchases.addCustomerInfoUpdateListener((customerInfo) {
-      final active = customerInfo.entitlements.active.containsKey(rcEntitlementId);
+      final active = _computePremium(customerInfo);
+      _logCustomerInfo(customerInfo, from: 'listener');
       _setPremium(active);
     });
 
@@ -57,7 +58,8 @@ class PremiumAccess {
   Future<bool> refreshEntitlementActive() async {
     try {
       final info = await Purchases.getCustomerInfo();
-      final active = info.entitlements.active.containsKey(rcEntitlementId);
+      final active = _computePremium(info);
+      _logCustomerInfo(info, from: 'refresh');
       _setPremium(active);
       return active;
     } catch (e) {
@@ -80,6 +82,29 @@ class PremiumAccess {
     } catch (e) {
       debugPrint('[PremiumAccess] preload offerings error: $e');
     }
+  }
+
+  bool _computePremium(CustomerInfo info) {
+    final ents = info.entitlements.active;
+    final hasExactEntitlement = rcEntitlementId.isNotEmpty
+        ? ents.containsKey(rcEntitlementId)
+        : false;
+    final hasAnyEntitlement = ents.isNotEmpty;
+
+    // Fallback: Ürün kimliği üzerinden doğrula (özellikle StoreKit Test / yanlış entitlement-ID durumları)
+    final hasProductActive = info.activeSubscriptions.contains(rcMonthlyProductId) ||
+        info.allPurchasedProductIdentifiers.contains(rcMonthlyProductId);
+
+    return hasExactEntitlement || hasAnyEntitlement || hasProductActive;
+  }
+
+  void _logCustomerInfo(CustomerInfo info, {String from = ''}) {
+    try {
+      final entKeys = info.entitlements.active.keys.toList();
+      final activeSubs = info.activeSubscriptions;
+      final allIds = info.allPurchasedProductIdentifiers;
+      debugPrint('[PremiumAccess] ($from) entitlements.active.keys=$entKeys  activeSubscriptions=$activeSubs  allPurchased=$allIds');
+    } catch (_) {}
   }
 
   Package? _findMonthlyPackage(Offerings? offerings) {
@@ -150,13 +175,15 @@ class PremiumAccess {
         }
         final result = await Purchases.purchaseStoreProduct(prods.first);
         final info = result.customerInfo;
-        final active = info.entitlements.active.containsKey(rcEntitlementId);
+        final active = _computePremium(info);
+        _logCustomerInfo(info, from: 'purchase_fallback');
         _setPremium(active);
         return (active, active ? null : 'Abonelik etkinleşmedi');
       } else {
         final result = await Purchases.purchasePackage(pkg);
         final info = result.customerInfo;
-        final active = info.entitlements.active.containsKey(rcEntitlementId);
+        final active = _computePremium(info);
+        _logCustomerInfo(info, from: 'purchase_package');
         _setPremium(active);
         return (active, active ? null : 'Abonelik etkinleşmedi');
       }
@@ -173,7 +200,8 @@ class PremiumAccess {
         return (false, 'RevenueCat anahtarları ayarlı değil');
       }
       final info = await Purchases.restorePurchases();
-      final active = info.entitlements.active.containsKey(rcEntitlementId);
+      final active = _computePremium(info);
+      _logCustomerInfo(info, from: 'restore');
       _setPremium(active);
       return (active, active ? null : 'Aktif abonelik bulunamadı');
     } catch (e) {
