@@ -147,7 +147,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         ),
                         SizedBox(height: 10),
                         Text(
-                          'Create without limits. Save without watermarks.\nOnly 1\$/month',
+                          'Create without limits. Save without watermarks.\nOnly \$1/month',
                           textAlign: TextAlign.left,
                           maxLines: 3,
                           softWrap: true,
@@ -229,7 +229,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           style: TextStyle(fontSize: 16, color: Color(0xFFBDBDBD)),
                         ),
                         Text(
-                          _priceString ?? '\$1',
+                          '\$1',
                           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -238,7 +238,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     _SubscribeButton(
                       isPremium: _isPremium,
                       onTap: _activatePremium,
-                      priceText: _priceString,
+                      priceText: '\$1',
                     ),
                     if (_isPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
@@ -334,7 +334,7 @@ class _SubscribeButton extends StatelessWidget {
         onPressed: onTap,
         icon: const Icon(Icons.star_rate_rounded),
         label: Text(
-          'Go Premium (${priceText ?? '1 \$/mo'})',
+          'Go Premium (${priceText ?? '\$1'}/mo)',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
