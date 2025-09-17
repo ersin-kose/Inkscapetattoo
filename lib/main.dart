@@ -1189,7 +1189,7 @@ class _MainScreenState extends State<MainScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Alt buton satırı: Silgi KAPALI iken GALLERY + TATTOO + SAVE; Silgi AÇIK iken Silgi + SAVE
+                  // Alt buton satırı: Silgi KAPALI iken GALLERY + TATTOO + SAVE; Silgi AÇIK iken sadece Silgi
                   if (_selectedTattooImage != null) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -1305,7 +1305,9 @@ class _MainScreenState extends State<MainScreen> {
                             ),
                           ),
                         ] else ...[
+                          const Spacer(flex: 1),
                           Expanded(
+                            flex: 2,
                             child: SizedBox(
                               height: 48,
                               child: ElevatedButton(
@@ -1347,38 +1349,7 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: SizedBox(
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _saveToGallery,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue[800],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  elevation: 3,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.camera_alt, size: 20),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'SAVE',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
+                          const Spacer(flex: 1),
                         ],
                       ],
                     ),
