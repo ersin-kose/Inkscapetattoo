@@ -1057,11 +1057,16 @@ class _MainScreenState extends State<MainScreen> {
                             children: [
                               Icon(Icons.photo_library, size: 20.sp),
                               SizedBox(width: 8.w),
-                              Text(
-                                'GALLERY',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'GALLERY',
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1098,15 +1103,22 @@ class _MainScreenState extends State<MainScreen> {
                           ),
                         ),
                       ] else ...[
-                        // Dövme var: Eraser OFF ise Gallery+Tattoo; Eraser ON ise Undo+Redo
+                        // Dövme var: Silgi KAPALI ise sadece Silgi butonu; Silgi AÇIK ise Undo/Redo
                         if (!_isEraserMode) ...[
                           ElevatedButton(
-                            onPressed: _pickImage,
+                            onPressed: () {
+                              setState(() {
+                                _isEraserMode = !_isEraserMode;
+                              });
+                            },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey[800],
+                              backgroundColor:
+                                  _isEraserMode
+                                      ? Colors.green[800]
+                                      : Colors.grey[700],
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
+                                horizontal: 20,
                                 vertical: 12,
                               ),
                               shape: RoundedRectangleBorder(
@@ -1114,49 +1126,24 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                               elevation: 3,
                             ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.photo_library, size: 20.sp),
-                              SizedBox(width: 8.w),
-                              Text(
-                                'GALLERY',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _isEraserMode
+                                      ? Icons.brush
+                                      : Icons.brush_outlined,
+                                  size: 20,
                                 ),
-                              ),
-                            ],
-                          ),
-                          ),
-                          ElevatedButton(
-                            onPressed: _pickTattooImage,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[900],
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              elevation: 3,
+                                const SizedBox(width: 8),
+                                Text(
+                                  _isEraserMode ? 'ERASER ON' : 'ERASER OFF',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.brush, size: 20.sp),
-                              SizedBox(width: 8.w),
-                              Text(
-                                'TATTOO',
-                                style: TextStyle(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
                           ),
                         ] else ...[
                           ElevatedButton.icon(
@@ -1202,81 +1189,197 @@ class _MainScreenState extends State<MainScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Silme modu kontrolü (UNDO/REDO üst sırada)
+                  // Alt buton satırı: Silgi KAPALI iken GALLERY + TATTOO + SAVE; Silgi AÇIK iken Silgi + SAVE
                   if (_selectedTattooImage != null) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _isEraserMode = !_isEraserMode;
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                _isEraserMode
-                                    ? Colors.green[800]
-                                    : Colors.grey[700],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            elevation: 3,
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _isEraserMode
-                                    ? Icons.brush
-                                    : Icons.brush_outlined,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isEraserMode ? 'ERASER ON' : 'ERASER OFF',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                        if (!_isEraserMode) ...[
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _pickImage,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey[800],
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 3,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.photo_library, size: 20.sp),
+                                    SizedBox(width: 8.w),
+                                    Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          'GALLERY',
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: _saveToGallery,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[800],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            elevation: 3,
                           ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.camera_alt, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                'Save to Gallery',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _pickTattooImage,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green[900],
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 3,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.brush, size: 20.sp),
+                                    SizedBox(width: 8.w),
+                                    Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          'TATTOO',
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _saveToGallery,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[800],
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 3,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.camera_alt, size: 20),
+                                    SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'SAVE',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isEraserMode = !_isEraserMode;
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      _isEraserMode
+                                          ? Colors.green[800]
+                                          : Colors.grey[700],
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 3,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _isEraserMode
+                                          ? Icons.brush
+                                          : Icons.brush_outlined,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'ERASER ON',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: SizedBox(
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _saveToGallery,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[800],
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  elevation: 3,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.camera_alt, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'SAVE',
+                                      style: TextStyle(
+                                        fontSize: 12.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],
