@@ -622,14 +622,6 @@ class _MainScreenState extends State<MainScreen> {
                 ? Row(
                   children: [
                     Icon(Icons.brush, color: Colors.green[400], size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${_eraserSize.toInt()}px',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: SliderTheme(
@@ -1143,7 +1135,9 @@ class _MainScreenState extends State<MainScreen> {
                       ] else ...[
                         // Dövme var: Silgi KAPALI ise sadece Silgi butonu; Silgi AÇIK ise Undo/Redo
                         if (!_isEraserMode) ...[
-                          ElevatedButton(
+                          SizedBox(
+                            width: 170,
+                            child: ElevatedButton(
                             onPressed: () {
                               setState(() {
                                 _isEraserMode = !_isEraserMode;
@@ -1164,24 +1158,28 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                               elevation: 3,
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _isEraserMode
-                                      ? Icons.brush
-                                      : Icons.brush_outlined,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _isEraserMode ? 'ERASER ON' : 'ERASER OFF',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                            child: Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _isEraserMode
+                                        ? Icons.brush
+                                        : Icons.brush_outlined,
+                                    size: 20,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'ERASER',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                          ),
                           ),
                         ] else ...[
                           ElevatedButton.icon(
@@ -1375,11 +1373,16 @@ class _MainScreenState extends State<MainScreen> {
                                       size: 20,
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      'ERASER ON',
-                                      style: TextStyle(
-                                        fontSize: 12.sp,
-                                        fontWeight: FontWeight.bold,
+                                    Flexible(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          'ERASER',
+                                          style: TextStyle(
+                                            fontSize: 12.sp,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
