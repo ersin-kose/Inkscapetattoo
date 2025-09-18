@@ -192,6 +192,44 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _takePhoto() async {
+    // Show confirmation before accessing the camera
+    final bool? allow = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'Camera Access',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Allow access to your camera?',
+            style: TextStyle(color: Color(0xFFBDBDBD)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Allow',
+                style: TextStyle(color: Colors.blue),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (allow != true) {
+      return;
+    }
+
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
       setState(() {
