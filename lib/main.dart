@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'profile_screen.dart';
 import 'premium_screen.dart';
 import 'storage_keys.dart';
@@ -621,7 +622,7 @@ class _MainScreenState extends State<MainScreen> {
             _isEraserMode
                 ? Row(
                   children: [
-                    Icon(Icons.brush, color: Colors.green[400], size: 20),
+                    Icon(Symbols.ink_eraser, color: Colors.green[400], size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: SliderTheme(
@@ -1162,12 +1163,7 @@ class _MainScreenState extends State<MainScreen> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    _isEraserMode
-                                        ? Icons.brush
-                                        : Icons.brush_outlined,
-                                    size: 20,
-                                  ),
+                                  Icon(Symbols.ink_eraser, size: 20),
                                   const SizedBox(width: 8),
                                   Text(
                                     'ERASER',
@@ -1322,11 +1318,11 @@ class _MainScreenState extends State<MainScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.camera_alt, size: 20),
+                                    Icon(Icons.file_download, size: 20),
                                     SizedBox(width: 8),
                                     Flexible(
                                       child: Text(
-                                        'SAVE',
+                                        'DOWNLOAD',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
@@ -1366,12 +1362,7 @@ class _MainScreenState extends State<MainScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      _isEraserMode
-                                          ? Icons.brush
-                                          : Icons.brush_outlined,
-                                      size: 20,
-                                    ),
+                                    Icon(Symbols.ink_eraser, size: 20),
                                     const SizedBox(width: 8),
                                     Flexible(
                                       child: FittedBox(
