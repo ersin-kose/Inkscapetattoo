@@ -427,8 +427,9 @@ class _MainScreenState extends State<MainScreen> {
         );
         return;
       }
-
-      final ui.Image uiImage = await boundary.toImage(pixelRatio: 3.0);
+      // Cihazın piksel oranını kullanın
+      final double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+      final ui.Image uiImage = await boundary.toImage(pixelRatio: devicePixelRatio);
 
       final byteData = await uiImage.toByteData(
         format: ui.ImageByteFormat.rawRgba,
@@ -446,13 +447,22 @@ class _MainScreenState extends State<MainScreen> {
         return;
       }
 
-      final img.Image im = img.Image.fromBytes(
+      img.Image im = img.Image.fromBytes(
         width: uiImage.width,
         height: uiImage.height,
         bytes: bd.buffer,
         numChannels: 4,
         order: img.ChannelOrder.rgba,
       );
+
+      // Boyutları hedef fiziksel piksele yuvarlayıp fazla şeffaf satır/sütunu kırp
+      final int targetW = (boundary.size.width * devicePixelRatio).round();
+      final int targetH = (boundary.size.height * devicePixelRatio).round();
+      final int cropW = targetW.clamp(1, im.width);
+      final int cropH = targetH.clamp(1, im.height);
+      if (im.width != cropW || im.height != cropH) {
+        im = img.copyCrop(im, x: 0, y: 0, width: cropW, height: cropH);
+      }
 
       for (int y = 0; y < im.height; y++) {
         for (int x = 0; x < im.width; x++) {
@@ -845,7 +855,8 @@ class _MainScreenState extends State<MainScreen> {
             key: _captureKey,
             child: Container(
               width: double.infinity,
-              height: MediaQuery.of(context).size.height * 0.7,
+              // Kesit yüksekliğini mantıksal pikselde tam sayıya yuvarla
+              height: (MediaQuery.of(context).size.height * 0.7).floorToDouble(),
               decoration: BoxDecoration(color: Colors.black87),
               child: GestureDetector(
                 onScaleStart: (ScaleStartDetails details) {
