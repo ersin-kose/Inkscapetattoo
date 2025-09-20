@@ -629,7 +629,7 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(
               Icons.error_outline,
               color: Colors.white,
-              size: 22,
+              size: 24,
             ),
             onPressed: () {
               showDialog(
@@ -989,7 +989,7 @@ class _MainScreenState extends State<MainScreen> {
                           children: [
         Icon(
           Icons.add_to_photos_outlined,
-          size: 50,
+          size: 40,
           color: Colors.grey[600],
         ),
                             const SizedBox(height: 16),
@@ -1105,11 +1105,16 @@ class _MainScreenState extends State<MainScreen> {
                             children: [
                               Icon(Icons.camera_alt, size: 20),
                               SizedBox(width: 8),
-                              Text(
-                                'CAMERA',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'CAMERA',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
