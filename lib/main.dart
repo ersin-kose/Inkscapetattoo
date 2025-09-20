@@ -141,6 +141,8 @@ class _MainScreenState extends State<MainScreen> {
   Path? _currentPath;
   bool _isErasing = false;
   bool _isEraserMode = false; // Silme modu aktif mi?
+  bool _isDraggingTattoo = false; // Tek parmakla taşıma
+  int _lastPointerCount = 0; // Gesture pointer sayısını izlemek için
   double _eraserSize = 30.0; // Silgi boyutu
   final ValueNotifier<int> _repaintNotifier = ValueNotifier<int>(0);
 
@@ -860,59 +862,88 @@ class _MainScreenState extends State<MainScreen> {
               decoration: BoxDecoration(color: Colors.black87),
               child: GestureDetector(
                 onScaleStart: (ScaleStartDetails details) {
+                  _lastPointerCount = details.pointerCount;
                   if (details.pointerCount == 1) {
-                    // Tek parmak - silme modu kontrolü
-                    if (_selectedTattooImage != null && _isEraserMode) {
+                    if (_selectedTattooImage != null) {
                       final localPosition = details.localFocalPoint;
 
-                      // Basit içeri-dışarı kontrol (döndürmeyi yaklaşık kabul)
+                      // Dövme merkezine olan uzaklığa göre kabaca temas kontrolü
                       final double half = tattooBoxSize / 2;
                       final center = Offset(
                         _tattooPosition.dx + half,
                         _tattooPosition.dy + half,
                       );
                       final distance = (localPosition - center).distance;
-                      final maxDistance = math.max(
-                        50.0,
-                        half * _tattooScale * 1.5,
-                      );
+                      final maxDistance = math.max(50.0, half * _tattooScale * 1.5);
 
-                      if (distance <= maxDistance) {
-                        setState(() {
-                          _isErasing = true;
+                      if (_isEraserMode) {
+                        // Silgi modu: path başlat
+                        if (distance <= maxDistance) {
+                          setState(() {
+                            _isErasing = true;
 
-                          final containerCenterX = _tattooPosition.dx + half;
-                          final containerCenterY = _tattooPosition.dy + half;
+                            final containerCenterX = _tattooPosition.dx + half;
+                            final containerCenterY = _tattooPosition.dy + half;
 
-                          final touchFromCenterX =
-                              localPosition.dx - containerCenterX;
-                          final touchFromCenterY =
-                              localPosition.dy - containerCenterY;
+                            final touchFromCenterX = localPosition.dx - containerCenterX;
+                            final touchFromCenterY = localPosition.dy - containerCenterY;
 
-                          final unscaledX = touchFromCenterX / _tattooScale;
-                          final unscaledY = touchFromCenterY / _tattooScale;
+                            final unscaledX = touchFromCenterX / _tattooScale;
+                            final unscaledY = touchFromCenterY / _tattooScale;
 
-                          final cos = math.cos(-_tattooRotation);
-                          final sin = math.sin(-_tattooRotation);
+                            final cos = math.cos(-_tattooRotation);
+                            final sin = math.sin(-_tattooRotation);
 
-                          final rotatedX = unscaledX * cos - unscaledY * sin;
-                          final rotatedY = unscaledX * sin + unscaledY * cos;
+                            final rotatedX = unscaledX * cos - unscaledY * sin;
+                            final rotatedY = unscaledX * sin + unscaledY * cos;
 
-                          final finalX = rotatedX + half;
-                          final finalY = rotatedY + half;
+                            final finalX = rotatedX + half;
+                            final finalY = rotatedY + half;
 
-                          _currentPath = Path()..moveTo(finalX, finalY);
-                          _repaintNotifier.value++;
-                        });
+                            _currentPath = Path()..moveTo(finalX, finalY);
+                            _repaintNotifier.value++;
+                          });
+                        }
+                      } else {
+                        // Taşıma modu: tek parmakla sürüklemeyi aktif et (isabetliyse)
+                        if (distance <= maxDistance) {
+                          setState(() {
+                            _isDraggingTattoo = true;
+                          });
+                        }
                       }
                     }
                   } else {
                     // Çok parmak - ölçeklendirme/döndürme için hazırlık
                     _initialScale = _tattooScale;
                     _initialRotation = _tattooRotation;
+                    _isDraggingTattoo = false;
                   }
                 },
                 onScaleUpdate: (ScaleUpdateDetails details) {
+                  // Pointer sayısı değiştiyse geçişleri yönet
+                  if (details.pointerCount != _lastPointerCount) {
+                    if (details.pointerCount > 1 && _lastPointerCount <= 1) {
+                      // Tek parmak -> çok parmak geçişi: pinch için baz değerleri al
+                      _initialScale = _tattooScale;
+                      _initialRotation = _tattooRotation;
+                      // Devam eden silme işlemi varsa path'i kaydet
+                      if (_isErasing && _currentPath != null) {
+                        final pathCopy = Path();
+                        pathCopy.addPath(_currentPath!, Offset.zero);
+                        _eraserPaths.add(
+                          EraserPath(path: pathCopy, strokeWidth: _eraserSize),
+                        );
+                        _currentPath = null;
+                        _isErasing = false;
+                        _undoStack.clear();
+                        _repaintNotifier.value++;
+                      }
+                      _isDraggingTattoo = false;
+                    }
+                    _lastPointerCount = details.pointerCount;
+                  }
+
                   if (details.pointerCount == 1 &&
                       _isErasing &&
                       _currentPath != null) {
@@ -942,6 +973,11 @@ class _MainScreenState extends State<MainScreen> {
 
                       _currentPath!.lineTo(finalX, finalY);
                       _repaintNotifier.value++;
+                    });
+                  } else if (details.pointerCount == 1 && !_isEraserMode && _isDraggingTattoo) {
+                    // Tek parmakla dövmeyi sürükle
+                    setState(() {
+                      _tattooPosition += details.focalPointDelta;
                     });
                   } else if (details.pointerCount > 1 && !_isErasing) {
                     setState(() {
@@ -980,7 +1016,10 @@ class _MainScreenState extends State<MainScreen> {
 
                       _repaintNotifier.value++;
                     });
+                  } else {
+                    _isDraggingTattoo = false;
                   }
+                  _lastPointerCount = 0;
                 },
                 child: Stack(
                   children: [
