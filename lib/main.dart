@@ -82,7 +82,7 @@ class _MyAppState extends State<MyApp> {
       splitScreenMode: true,
       builder: (context, child) {
         return MaterialApp(
-          title: 'InkScape',
+          title: 'Inkscape',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             colorScheme: ColorScheme.dark(
@@ -632,11 +632,11 @@ class _MainScreenState extends State<MainScreen> {
                   return AlertDialog(
                     backgroundColor: Colors.grey[900],
                     title: const Text(
-                      'About InkScape',
+                      'About Inkscape',
                       style: const TextStyle(color: Colors.white),
                     ),
                     content: const Text(
-                      'InkScape is a digital tattoo application that allows you to apply tattoos to your photos. You can upload tattoo images, position them, scale them, and erase parts as needed.',
+                      'Inkscape is a digital tattoo application that allows you to apply tattoos to your photos. You can upload tattoo images, position them, scale them, and erase parts as needed.',
                       style: const TextStyle(color: Color(0xFFBDBDBD)),
                     ),
                     actions: [
