@@ -147,42 +147,16 @@ class _MainScreenState extends State<MainScreen> {
   final ValueNotifier<int> _repaintNotifier = ValueNotifier<int>(0);
 
   Future<void> _pickImage() async {
-    // Önce kullanıcıdan onay iste
-    final bool? allow = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: const Text(
-            'Gallery Access',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: const Text(
-            'Allow access to your gallery?',
-            style: TextStyle(color: Color(0xFFBDBDBD)),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.blue),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Allow',
-                style: TextStyle(color: Colors.blue),
-              ),
-            ),
-          ],
+    // iOS'ta galeriye erişmeden önce sistem (Photos) izin kartını iste
+    if (Platform.isIOS) {
+      final perm = await PhotoManager.requestPermissionExtend();
+      if (!perm.isAuth) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo access permission denied')),
         );
-      },
-    );
-
-    if (allow != true) {
-      return;
+        return;
+      }
     }
 
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
