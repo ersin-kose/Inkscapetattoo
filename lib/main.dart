@@ -615,6 +615,12 @@ class _MainScreenState extends State<MainScreen> {
     final canUndo = _eraserPaths.isNotEmpty;
     final canRedo = _undoStack.isNotEmpty;
 
+    // iPhone benzeri genişlikte ölçek faktörü
+    final double screenWidth = MediaQuery.of(context).size.width;
+    const double designWidth = 375.0;
+    final double uiScale = screenWidth / designWidth;
+    final double tattooBoxSize = 200.0 * uiScale;
+
     return Scaffold(
       appBar: AppBar(
         leading: Transform.translate(
@@ -623,7 +629,7 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(
               Icons.error_outline,
               color: Colors.white,
-              size: 22.sp,
+              size: 22,
             ),
             onPressed: () {
               showDialog(
@@ -670,8 +676,8 @@ class _MainScreenState extends State<MainScreen> {
                           thumbColor: Colors.green[400],
                           overlayColor: Colors.green[400]?.withOpacity(0.3),
                           trackHeight: 4,
-                          thumbShape: RoundSliderThumbShape(
-                            enabledThumbRadius: 8.r,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 8,
                           ),
                         ),
                         child: Slider(
@@ -694,7 +700,7 @@ class _MainScreenState extends State<MainScreen> {
                   child: Text(
                     'INKSCAPE',
                     style: TextStyle(
-                      fontSize: 16.sp,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 1,
                     ),
@@ -747,21 +753,21 @@ class _MainScreenState extends State<MainScreen> {
                               'InkScape',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18.sp,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 8.h),
+                            SizedBox(height: 8),
                             Text(
                               'Version: 1.0.0',
                               style: TextStyle(color: const Color(0xFFBDBDBD)),
                             ),
-                            SizedBox(height: 8.h),
+                            SizedBox(height: 8),
                             Text(
                               'InkScape lets you try digital tattoos on your photos. Upload tattoo designs, position them, scale, and erase as you like.',
                               style: TextStyle(color: const Color(0xFFBDBDBD)),
                             ),
-                            SizedBox(height: 16.h),
+                            SizedBox(height: 16),
                             Text(
                               '© 2024 InkScape',
                               style: TextStyle(color: const Color(0xFF9E9E9E)),
@@ -849,22 +855,23 @@ class _MainScreenState extends State<MainScreen> {
                       final localPosition = details.localFocalPoint;
 
                       // Basit içeri-dışarı kontrol (döndürmeyi yaklaşık kabul)
+                      final double half = tattooBoxSize / 2;
                       final center = Offset(
-                        _tattooPosition.dx + 100,
-                        _tattooPosition.dy + 100,
+                        _tattooPosition.dx + half,
+                        _tattooPosition.dy + half,
                       );
                       final distance = (localPosition - center).distance;
                       final maxDistance = math.max(
                         50.0,
-                        100 * _tattooScale * 1.5,
+                        half * _tattooScale * 1.5,
                       );
 
                       if (distance <= maxDistance) {
                         setState(() {
                           _isErasing = true;
 
-                          final containerCenterX = _tattooPosition.dx + 100;
-                          final containerCenterY = _tattooPosition.dy + 100;
+                          final containerCenterX = _tattooPosition.dx + half;
+                          final containerCenterY = _tattooPosition.dy + half;
 
                           final touchFromCenterX =
                               localPosition.dx - containerCenterX;
@@ -880,8 +887,8 @@ class _MainScreenState extends State<MainScreen> {
                           final rotatedX = unscaledX * cos - unscaledY * sin;
                           final rotatedY = unscaledX * sin + unscaledY * cos;
 
-                          final finalX = rotatedX + 100;
-                          final finalY = rotatedY + 100;
+                          final finalX = rotatedX + half;
+                          final finalY = rotatedY + half;
 
                           _currentPath = Path()..moveTo(finalX, finalY);
                           _repaintNotifier.value++;
@@ -901,8 +908,9 @@ class _MainScreenState extends State<MainScreen> {
                     final localPosition = details.localFocalPoint;
 
                     setState(() {
-                      final containerCenterX = _tattooPosition.dx + 100;
-                      final containerCenterY = _tattooPosition.dy + 100;
+                      final double half = tattooBoxSize / 2;
+                      final containerCenterX = _tattooPosition.dx + half;
+                      final containerCenterY = _tattooPosition.dy + half;
 
                       final touchFromCenterX =
                           localPosition.dx - containerCenterX;
@@ -918,8 +926,8 @@ class _MainScreenState extends State<MainScreen> {
                       final rotatedX = unscaledX * cos - unscaledY * sin;
                       final rotatedY = unscaledX * sin + unscaledY * cos;
 
-                      final finalX = rotatedX + 100;
-                      final finalY = rotatedY + 100;
+                      final finalX = rotatedX + half;
+                      final finalY = rotatedY + half;
 
                       _currentPath!.lineTo(finalX, finalY);
                       _repaintNotifier.value++;
@@ -1009,8 +1017,8 @@ class _MainScreenState extends State<MainScreen> {
                             scale: _tattooScale,
                             alignment: Alignment.center,
                             child: Container(
-                              width: 200,
-                              height: 200,
+                              width: tattooBoxSize,
+                              height: tattooBoxSize,
                               decoration: BoxDecoration(
                                 border:
                                     _isEraserMode
@@ -1035,7 +1043,7 @@ class _MainScreenState extends State<MainScreen> {
                                           builder: (context, value, child) {
                                             return CustomPaint(
                                               key: ValueKey('eraser_$value'),
-                                              size: const Size(200, 200),
+                                              size: Size(tattooBoxSize, tattooBoxSize),
                                               painter: EraserPainter(
                                                 image: _tattooImageBytes!,
                                                 eraserPaths: [
@@ -1095,12 +1103,12 @@ class _MainScreenState extends State<MainScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.camera_alt, size: 20.sp),
-                              SizedBox(width: 8.w),
+                              Icon(Icons.camera_alt, size: 20),
+                              SizedBox(width: 8),
                               Text(
                                 'CAMERA',
                                 style: TextStyle(
-                                  fontSize: 14.sp,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -1124,15 +1132,15 @@ class _MainScreenState extends State<MainScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.photo_library, size: 20.sp),
-                              SizedBox(width: 8.w),
+                              Icon(Icons.photo_library, size: 20),
+                              SizedBox(width: 8),
                               Flexible(
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
                                     'GALLERY',
                                     style: TextStyle(
-                                      fontSize: 12.sp,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -1159,12 +1167,12 @@ class _MainScreenState extends State<MainScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.brush, size: 20.sp),
-                              SizedBox(width: 8.w),
+                              Icon(Icons.brush, size: 20),
+                              SizedBox(width: 8),
                               Text(
                                 'TATTOO',
                                 style: TextStyle(
-                                  fontSize: 14.sp,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -1206,7 +1214,7 @@ class _MainScreenState extends State<MainScreen> {
                                   Text(
                                     'ERASER',
                                     style: TextStyle(
-                                      fontSize: 14.sp,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -1282,15 +1290,15 @@ class _MainScreenState extends State<MainScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.photo_library, size: 20.sp),
-                                    SizedBox(width: 8.w),
+                                    Icon(Icons.photo_library, size: 20),
+                                    SizedBox(width: 8),
                                     Flexible(
                                       child: FittedBox(
                                         fit: BoxFit.scaleDown,
                                         child: Text(
                                           'GALLERY',
                                           style: TextStyle(
-                                            fontSize: 12.sp,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -1319,15 +1327,15 @@ class _MainScreenState extends State<MainScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.brush, size: 20.sp),
-                                    SizedBox(width: 8.w),
+                                    Icon(Icons.brush, size: 20),
+                                    SizedBox(width: 8),
                                     Flexible(
                                       child: FittedBox(
                                         fit: BoxFit.scaleDown,
                                         child: Text(
                                           'TATTOO',
                                           style: TextStyle(
-                                            fontSize: 12.sp,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -1364,7 +1372,7 @@ class _MainScreenState extends State<MainScreen> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          fontSize: 12.sp,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -1408,7 +1416,7 @@ class _MainScreenState extends State<MainScreen> {
                                         child: Text(
                                           'ERASER',
                                           style: TextStyle(
-                                            fontSize: 12.sp,
+                                            fontSize: 12,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
