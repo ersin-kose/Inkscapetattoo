@@ -335,8 +335,8 @@ class _SubscribeButton extends StatelessWidget {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFFA000), // amber tone
-          foregroundColor: Colors.black,
+          backgroundColor: Colors.green[700], // match active state green
+          foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 2,
         ),
