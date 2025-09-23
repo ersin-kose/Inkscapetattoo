@@ -238,7 +238,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     _SubscribeButton(
                       isPremium: _isPremium,
                       onTap: _activatePremium,
-                      priceText: _priceString,
                     ),
                     if (_isPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
@@ -292,13 +291,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
 class _SubscribeButton extends StatelessWidget {
   final bool isPremium;
   final VoidCallback onTap;
-  final String? priceText;
 
   const _SubscribeButton({
     Key? key,
     required this.isPremium,
     required this.onTap,
-    this.priceText,
   }) : super(key: key);
 
   @override
@@ -333,9 +330,9 @@ class _SubscribeButton extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onTap,
         icon: const Icon(Icons.star_rate_rounded),
-        label: Text(
-          'Go Premium (${priceText ?? '\$1'}/mo)',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        label: const Text(
+          'Go Premium',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFFA000), // amber tone
