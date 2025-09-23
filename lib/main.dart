@@ -1359,7 +1359,7 @@ class _MainScreenState extends State<MainScreen> {
                                     SizedBox(width: 8),
                                     Flexible(
                                       child: Text(
-                                        'DOWNLOAD',
+                                        'SAVE',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(

@@ -135,8 +135,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Text(
+                      children: [
+                        const Text(
                           'INKSCAPE PREMIUM',
                           style: TextStyle(
                             color: Colors.black,
@@ -145,9 +145,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             letterSpacing: 1,
                           ),
                         ),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Text(
-                          'Create without limits. Save without watermarks.\nOnly \$1/month',
+                          'Create without limits. Save without watermarks.\nOnly ${_priceString ?? '\$1'}/month',
                           textAlign: TextAlign.left,
                           maxLines: 3,
                           softWrap: true,
@@ -229,7 +229,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           style: TextStyle(fontSize: 16, color: Color(0xFFBDBDBD)),
                         ),
                         Text(
-                          '\$1',
+                          _priceString ?? '\$1',
                           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -238,7 +238,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     _SubscribeButton(
                       isPremium: _isPremium,
                       onTap: _activatePremium,
-                      priceText: '\$1',
+                      priceText: _priceString,
                     ),
                     if (_isPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
