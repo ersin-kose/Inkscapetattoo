@@ -264,7 +264,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextButton(
+                        TextButton.icon(
                           onPressed: () async {
                             final (ok, msg) = await PremiumAccess.instance.restorePurchases();
                             if (!mounted) return;
@@ -273,7 +273,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             );
                             if (ok) setState(() => _isPremium = true);
                           },
-                          child: const Text('Restore Purchases'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white70,
+                          ),
+                          icon: const Icon(Icons.restore),
+                          label: const Text('Restore Purchases'),
                         ),
                       ],
                     ),
