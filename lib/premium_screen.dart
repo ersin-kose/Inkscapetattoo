@@ -4,6 +4,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'storage_keys.dart';
 import 'services/premium_access.dart';
 import 'revenuecat_keys.dart';
+import 'brand_theme.dart';
 
 class PremiumScreen extends StatefulWidget {
   const PremiumScreen({Key? key}) : super(key: key);
@@ -92,192 +93,125 @@ class _PremiumScreenState extends State<PremiumScreen> {
     }
 
     final colorScheme = Theme.of(context).colorScheme;
-    final tsf = MediaQuery.of(context).textScaleFactor;
-    final double heroMinHeight = 200 + (40 * (tsf - 1.0)).clamp(0, 80);
     final formattedExpiry = _formatExpiration(_premiumExpiration);
     final bool hasExpiredPremium = false; // RC ile süreyi biz tutmuyoruz
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Premium'),
+        centerTitle: true,
       ),
+      bottomNavigationBar: !_isPremium
+          ? _PurchaseBar(
+              price: _priceString,
+              onTap: _activatePremium,
+            )
+          : null,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            _PremiumHero(price: _priceString),
+            const SizedBox(height: 16),
             Container(
-              constraints: BoxConstraints(minHeight: heroMinHeight),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFFFC857), // amber-gold
-                    Color(0xFFFF8C42), // orange
-                  ],
-                ),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: -10,
-                    top: -10,
-                    child: Icon(
-                      Icons.stars_rounded,
-                      size: 120,
-                      color: Colors.white.withOpacity(0.12),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'INKSCAPE PREMIUM',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Create without limits. Save without watermarks.\nOnly ${_priceString ?? '\$1'}/month',
-                          textAlign: TextAlign.left,
-                          maxLines: 3,
-                          softWrap: true,
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 22,
-                            height: 1.25,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                border: Border.all(color: Colors.white.withOpacity(0.06)),
+                color: colorScheme.surface.withOpacity(0.6),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.30),
+                    blurRadius: 16,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 20),
-
-            Card(
-              color: colorScheme.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
-                        SizedBox(width: 10),
-                        Expanded(child: Text('Unlimited tattoo trials and saves')),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
-                        SizedBox(width: 10),
-                        Expanded(child: Text('Export without watermarks')),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
-                        SizedBox(width: 10),
-                        Expanded(child: Text('Realistic background-free tattoo collection')),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
-                        SizedBox(width: 10),
-                        Expanded(child: Text('Priority support and new features')),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            Card(
-              color: colorScheme.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const _FeatureItem(
+                      icon: Icons.auto_awesome,
+                      text: 'Sınırsız deneme, sınırsız kayıt',
+                    ),
+                    const SizedBox(height: 10),
+                    const _FeatureItem(
+                      icon: Icons.water_drop_outlined,
+                      text: 'Filigransız yüksek çözünürlüklü dışa aktarma',
+                    ),
+                    const SizedBox(height: 10),
+                    const _FeatureItem(
+                      icon: Icons.rocket_launch_outlined,
+                      text: 'Öncelikli destek ve yeni özellikler',
+                    ),
+
+                    const SizedBox(height: 16),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'Monthly',
-                          style: TextStyle(fontSize: 16, color: Color(0xFFBDBDBD)),
-                        ),
+                        const Icon(Icons.check_circle_outline, size: 16, color: Color(0xFF9E9E9E)),
+                        const SizedBox(width: 6),
                         Text(
-                          _priceString ?? '\$1',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                          'Otomatik yenilenir, istediğin zaman iptal',
+                          style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.75)),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    _SubscribeButton(
-                      isPremium: _isPremium,
-                      onTap: _activatePremium,
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withOpacity(0.07)),
+                          ),
+                          child: const Text(
+                            'Aylık',
+                            style: TextStyle(fontSize: 13, color: Color(0xFFBDBDBD)),
+                          ),
+                        ),
+                        Text(
+                          _priceString ?? '\$1',
+                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+                        ),
+                      ],
                     ),
+
+                    // CTA sadeleştirildi: yalnızca alttaki sabit satın alma butonu
+
                     if (_isPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        'Your Premium membership is active until $formattedExpiry.',
-                        style: const TextStyle(fontSize: 14, color: Colors.white),
+                        'Premium $formattedExpiry tarihine kadar aktif',
+                        style: const TextStyle(fontSize: 13, color: Colors.white70),
                         textAlign: TextAlign.center,
                       ),
                     ] else if (hasExpiredPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
-                      Text(
-                        'Your Premium subscription ended on $formattedExpiry.',
-                        style: const TextStyle(fontSize: 14, color: Color(0xFFBDBDBD)),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
                       const Text(
-                        'Subscribe again to regain unlimited access.',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
+                        'Premium aboneliğin sona erdi.',
+                        style: TextStyle(fontSize: 14, color: Color(0xFFBDBDBD)),
                         textAlign: TextAlign.center,
                       ),
                     ],
+
                     const SizedBox(height: 8),
+
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton.icon(
-                          onPressed: () async {
-                            final (ok, msg) = await PremiumAccess.instance.restorePurchases();
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(ok ? 'Satın alımlar geri yüklendi' : (msg ?? 'Geri yükleme başarısız'))),
-                            );
-                            if (ok) setState(() => _isPremium = true);
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white70,
-                          ),
-                          icon: const Icon(Icons.restore),
-                          label: const Text('Restore Purchases'),
+                      children: const [
+                        Icon(Icons.lock_outline, size: 16, color: Color(0xFF9E9E9E)),
+                        SizedBox(width: 6),
+                        Text(
+                          'Ödemeler mağaza üzerinden güvende',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
                         ),
                       ],
                     ),
@@ -285,6 +219,27 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 12),
+
+            Center(
+              child: TextButton.icon(
+                onPressed: () async {
+                  final (ok, msg) = await PremiumAccess.instance.restorePurchases();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(ok ? 'Satın alımlar geri yüklendi' : (msg ?? 'Geri yükleme başarısız'))),
+                  );
+                  if (ok) setState(() => _isPremium = true);
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                ),
+                icon: const Icon(Icons.restore),
+                label: const Text('Satın Alımları Geri Yükle'),
+              ),
+            ),
+            const SizedBox(height: 80),
           ],
         ),
       ),
@@ -292,57 +247,174 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 }
 
-class _SubscribeButton extends StatelessWidget {
-  final bool isPremium;
-  final VoidCallback onTap;
+// --- UI PARTIALS ---
 
-  const _SubscribeButton({
-    Key? key,
-    required this.isPremium,
-    required this.onTap,
-  }) : super(key: key);
+class _PremiumHero extends StatelessWidget {
+  final String? price;
+  const _PremiumHero({required this.price});
 
   @override
   Widget build(BuildContext context) {
-    if (isPremium) {
-      return Container(
-        height: 54,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.green[700],
+    final tsf = MediaQuery.of(context).textScaleFactor;
+    final double heroMinHeight = 220 + (36 * (tsf - 1.0)).clamp(0, 72);
+
+    return Container(
+      constraints: BoxConstraints(minHeight: heroMinHeight),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            BrandTheme.premiumStart,
+            BrandTheme.premiumEnd,
+          ],
         ),
-        child: const Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.verified, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Premium active',
+      ),
+      child: Stack(
+        children: [
+          // Minimal hero: no decorative icons
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Premium’a Geç',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
+                    color: BrandTheme.onPremium,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                  )),
-            ],
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Sınırsız tasarım, filigransız kayıt',
+                  style: TextStyle(
+                    color: BrandTheme.onPremium,
+                    fontSize: 26,
+                    height: 1.15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Filigransız kayıt. Aylık ${price ?? '\$1'}',
+                  style: const TextStyle(
+                    color: BrandTheme.onPremium,
+                    fontSize: 15,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _FeatureItem({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.07),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Icon(icon, size: 16, color: BrandTheme.accent),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 15, height: 1.2),
           ),
         ),
-      );
-    }
+      ],
+    );
+  }
+}
 
-    return SizedBox(
-      height: 54,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.star_rate_rounded),
-        label: const Text(
-          'Go Premium',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+class _PurchaseBar extends StatelessWidget {
+  final String? price;
+  final VoidCallback onTap;
+
+  const _PurchaseBar({required this.price, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.8),
+          border: const Border(top: BorderSide(color: Color(0x1FFFFFFF))),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.4),
+              blurRadius: 20,
+              offset: const Offset(0, -8),
+            )
+          ],
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green[700], // match active state green
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white.withOpacity(0.06),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.calendar_month, size: 16, color: Color(0xFFBDBDBD)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Aylık ${price ?? '\$1'}',
+                    style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: onTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: BrandTheme.cta,
+                    foregroundColor: BrandTheme.onCta,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 8,
+                    shadowColor: BrandTheme.cta.withOpacity(0.45),
+                  ),
+                  child: const Text(
+                    "Premium'a Geç",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
