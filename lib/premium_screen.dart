@@ -156,21 +156,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.stars_rounded, color: gold1),
-                            SizedBox(width: 8),
-                            Text(
-                              'INKSCAPE PREMIUM',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ],
+                        const Text(
+                          'INKSCAPE PREMIUM',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -186,10 +179,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        _SubscribeButton(
-                          isPremium: _isPremium,
-                          onTap: _activatePremium,
-                        ),
                       ],
                     ),
                   ),
@@ -301,6 +290,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       'Cancel anytime. One tap to manage in your store account.',
                       style: TextStyle(fontSize: 12, color: textMuted),
                     ),
+                    const SizedBox(height: 12),
+                    _SubscribeButton(
+                      isPremium: _isPremium,
+                      onTap: _activatePremium,
+                    ),
                     if (_isPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
                       Text(
@@ -326,7 +320,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextButton(
+                        TextButton.icon(
                           onPressed: () async {
                             final (ok, msg) = await PremiumAccess.instance.restorePurchases();
                             if (!mounted) return;
@@ -335,10 +329,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             );
                             if (ok) setState(() => _isPremium = true);
                           },
-                          child: Text(
-                            'Restore Purchases',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          icon: const Icon(Icons.restore_outlined),
+                          label: const Text('Restore Purchases'),
+                          style: TextButton.styleFrom(foregroundColor: Colors.white),
                         ),
                       ],
                     ),
