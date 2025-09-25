@@ -135,21 +135,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               child: Stack(
                 children: [
-                  Positioned(
-                    right: -40,
-                    top: -40,
-                    child: Container(
-                      width: 180,
-                      height: 180,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [Color(0x33F3C77A), Color(0x00000000)],
-                          radius: 0.8,
-                        ),
-                      ),
-                    ),
-                  ),
                   Padding(
                     padding: const EdgeInsets.all(22),
                     child: Column(
