@@ -42,6 +42,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
       } catch (_) {}
     }
 
+    // Ekranda her zaman sabit 1$ göster.
+    price = '1\$';
+
     // Eski yerel flagleri geriye dönük uyumluluk için güncelleyelim
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(StorageKeys.premiumFlag, hasRcPremium);
@@ -152,7 +155,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Create without limits. Save without watermarks.\nOnly ${_priceString ?? '\$1'}/month',
+                          'Create without limits. Save without watermarks.\nOnly ${_priceString ?? '1\$'}/month',
                           textAlign: TextAlign.left,
                           maxLines: 3,
                           softWrap: true,
@@ -261,7 +264,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                           style: TextStyle(fontSize: 16, color: textMuted),
                         ),
                         Text(
-                          _priceString ?? '\$1',
+                          _priceString ?? '1\$',
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
