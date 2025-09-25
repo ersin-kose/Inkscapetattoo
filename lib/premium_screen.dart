@@ -91,14 +91,23 @@ class _PremiumScreenState extends State<PremiumScreen> {
       );
     }
 
-    final colorScheme = Theme.of(context).colorScheme;
     final tsf = MediaQuery.of(context).textScaleFactor;
-    final double heroMinHeight = 200 + (40 * (tsf - 1.0)).clamp(0, 80);
+    final double heroMinHeight = 220 + (40 * (tsf - 1.0)).clamp(0, 80);
+    // Premium için modern minimal palet
+    const bgDark = Color(0xFF0B0F14);
+    const cardStroke = Color(0x14FFFFFF);
+    const textMuted = Color(0xFF9CA3AF);
+    const success = Color(0xFF10B981);
+    const gold1 = Color(0xFFF3C77A);
+    const gold2 = Color(0xFFDAA520);
     final formattedExpiry = _formatExpiration(_premiumExpiration);
     final bool hasExpiredPremium = false; // RC ile süreyi biz tutmuyoruz
 
     return Scaffold(
+      backgroundColor: bgDark,
       appBar: AppBar(
+        backgroundColor: bgDark,
+        elevation: 0,
         title: const Text('Premium'),
       ),
       body: SingleChildScrollView(
@@ -109,54 +118,77 @@ class _PremiumScreenState extends State<PremiumScreen> {
             Container(
               constraints: BoxConstraints(minHeight: heroMinHeight),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFFFC857), // amber-gold
-                    Color(0xFFFF8C42), // orange
-                  ],
+                  colors: [Color(0xFF12151B), Color(0xFF0E1116)],
                 ),
+                border: Border.all(color: cardStroke),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 20,
+                    offset: Offset(0, 12),
+                  ),
+                ],
               ),
               child: Stack(
                 children: [
                   Positioned(
-                    right: -10,
-                    top: -10,
-                    child: Icon(
-                      Icons.stars_rounded,
-                      size: 120,
-                      color: Colors.white.withOpacity(0.12),
+                    right: -40,
+                    top: -40,
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [Color(0x33F3C77A), Color(0x00000000)],
+                          radius: 0.8,
+                        ),
+                      ),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(22),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'INKSCAPE PREMIUM',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.stars_rounded, color: gold1),
+                            SizedBox(width: 8),
+                            Text(
+                              'INKSCAPE PREMIUM',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Text(
                           'Create without limits. Save without watermarks.\nOnly ${_priceString ?? '\$1'}/month',
                           textAlign: TextAlign.left,
                           maxLines: 3,
                           softWrap: true,
                           style: TextStyle(
-                            color: Colors.black,
+                            color: Colors.white,
                             fontSize: 22,
                             height: 1.25,
                             fontWeight: FontWeight.bold,
                           ),
+                        ),
+                        const SizedBox(height: 14),
+                        _SubscribeButton(
+                          isPremium: _isPremium,
+                          onTap: _activatePremium,
                         ),
                       ],
                     ),
@@ -168,8 +200,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
             const SizedBox(height: 20),
 
             Card(
-              color: colorScheme.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              color: const Color(0x0DFFFFFF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: cardStroke),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -177,33 +212,53 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   children: [
                     Row(
                       children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
+                        Icon(Icons.check_circle, color: Color(0xFF10B981)),
                         SizedBox(width: 10),
-                        Expanded(child: Text('Unlimited tattoo trials and saves')),
+                        Expanded(
+                          child: Text(
+                            'Unlimited tattoo trials and saves',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
+                        Icon(Icons.check_circle, color: Color(0xFF10B981)),
                         SizedBox(width: 10),
-                        Expanded(child: Text('Export without watermarks')),
+                        Expanded(
+                          child: Text(
+                            'Export without watermarks',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
+                        Icon(Icons.check_circle, color: Color(0xFF10B981)),
                         SizedBox(width: 10),
-                        Expanded(child: Text('Realistic background-free tattoo collection')),
+                        Expanded(
+                          child: Text(
+                            'Realistic background-free tattoo collection',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: const [
-                        Icon(Icons.check_circle, color: Colors.greenAccent),
+                        Icon(Icons.check_circle, color: Color(0xFF10B981)),
                         SizedBox(width: 10),
-                        Expanded(child: Text('Priority support and new features')),
+                        Expanded(
+                          child: Text(
+                            'Priority support and new features',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -214,8 +269,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
             const SizedBox(height: 16),
 
             Card(
-              color: colorScheme.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              color: const Color(0x0DFFFFFF),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: cardStroke),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -224,39 +282,43 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Monthly',
-                          style: TextStyle(fontSize: 16, color: Color(0xFFBDBDBD)),
+                          style: TextStyle(fontSize: 16, color: textMuted),
                         ),
                         Text(
                           _priceString ?? '\$1',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    _SubscribeButton(
-                      isPremium: _isPremium,
-                      onTap: _activatePremium,
+                    const SizedBox(height: 6),
+                    Text(
+                      'Cancel anytime. One tap to manage in your store account.',
+                      style: TextStyle(fontSize: 12, color: textMuted),
                     ),
                     if (_isPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
                       Text(
                         'Your Premium membership is active until $formattedExpiry.',
-                        style: const TextStyle(fontSize: 14, color: Colors.white),
+                        style: const TextStyle(fontSize: 14, color: textMuted),
                         textAlign: TextAlign.center,
                       ),
                     ] else if (hasExpiredPremium && formattedExpiry != null) ...[
                       const SizedBox(height: 12),
                       Text(
                         'Your Premium subscription ended on $formattedExpiry.',
-                        style: const TextStyle(fontSize: 14, color: Color(0xFFBDBDBD)),
+                        style: const TextStyle(fontSize: 14, color: textMuted),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Subscribe again to regain unlimited access.',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF9E9E9E)),
+                        style: TextStyle(fontSize: 12, color: textMuted),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -273,7 +335,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
                             );
                             if (ok) setState(() => _isPremium = true);
                           },
-                          child: const Text('Restore Purchases'),
+                          child: Text(
+                            'Restore Purchases',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     ),
@@ -304,8 +369,8 @@ class _SubscribeButton extends StatelessWidget {
       return Container(
         height: 54,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.green[700],
+          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFF10B981),
         ),
         child: const Center(
           child: Row(
@@ -313,12 +378,14 @@ class _SubscribeButton extends StatelessWidget {
             children: [
               Icon(Icons.verified, color: Colors.white),
               SizedBox(width: 8),
-              Text('Premium active',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  )),
+              Text(
+                'Premium active',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ),
@@ -327,18 +394,46 @@ class _SubscribeButton extends StatelessWidget {
 
     return SizedBox(
       height: 54,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.star_rate_rounded),
-        label: const Text(
-          'Go Premium',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green[700], // match active state green
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 2,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: onTap,
+            child: const Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.star_rate_rounded, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Go Premium',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
