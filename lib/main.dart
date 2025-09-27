@@ -14,6 +14,7 @@ import 'package:photo_manager/photo_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:in_app_review/in_app_review.dart';
 import 'profile_screen.dart';
 import 'premium_screen.dart';
 import 'storage_keys.dart';
@@ -510,6 +511,19 @@ class _MainScreenState extends State<MainScreen> {
       return true;
     }
 
+    // 3. denemede (kullanım sayacı 2 iken) puan verme kartını göster
+    if (_tattooUsageCount >= 2) {
+      final prefs = await SharedPreferences.getInstance();
+      final done = prefs.getBool(StorageKeys.ratingPromptCompleted) ?? false;
+      if (!done) {
+        final allowed = await _showRatingGateCard();
+        if (!allowed) {
+          return false; // Kart kapatıldı, devam etme
+        }
+        await prefs.setBool(StorageKeys.ratingPromptCompleted, true);
+      }
+    }
+
     if (_tattooUsageCount >= _freeTattooUsageLimit) {
       if (!mounted) return false;
       String message =
@@ -529,6 +543,104 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     return true;
+  }
+
+  Future<bool> _showRatingGateCard() async {
+    final theme = Theme.of(context);
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final media = MediaQuery.of(ctx);
+        final bottom = media.viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: bottom),
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[900],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.star_rate_rounded, color: Colors.amber, size: 28),
+                    SizedBox(width: 8),
+                    Text(
+                      'Uygulamayı beğendiniz mi?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Puan verin, ücretsiz kullanmaya devam edin. Şimdi puan verdiğinizde 2 kez daha deneyebilirsiniz.',
+                  style: TextStyle(color: Color(0xFFBDBDBD)),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      try {
+                        final inAppReview = InAppReview.instance;
+                        final avail = await inAppReview.isAvailable();
+                        if (avail) {
+                          await inAppReview.requestReview();
+                        }
+                        // Not: iOS prompt dönüş değeri yok; devam izni veriyoruz.
+                        if (Navigator.of(ctx).canPop()) {
+                          Navigator.of(ctx).pop(true);
+                        }
+                      } catch (_) {
+                        // Prompt açılamasa da kullanıcıyı engellemeyelim
+                        if (Navigator.of(ctx).canPop()) {
+                          Navigator.of(ctx).pop(true);
+                        }
+                      }
+                    },
+                    child: const Text(
+                      'Puan ver ve devam et',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop(false);
+                    },
+                    child: const Text('Daha sonra'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    return result == true;
   }
 
   Future<void> _openPremiumScreen() async {
