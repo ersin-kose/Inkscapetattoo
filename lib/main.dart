@@ -546,94 +546,93 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<bool> _showRatingGateCard() async {
-    final theme = Theme.of(context);
-    final result = await showModalBottomSheet<bool>(
+    final result = await showDialog<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      barrierDismissible: true,
+      barrierColor: Colors.black54,
       builder: (ctx) {
-        final media = MediaQuery.of(ctx);
-        final bottom = media.viewInsets.bottom;
-        return Padding(
-          padding: EdgeInsets.only(bottom: bottom),
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 520,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: const [
-                    Icon(Icons.star_rate_rounded, color: Colors.amber, size: 28),
-                    SizedBox(width: 8),
-                    Text(
-                      'Uygulamayı beğendiniz mi?',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Material(
+                color: Colors.transparent,
+                child: Container
+                  (
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[900],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Align(
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Uygulamayı beğendiniz mi?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Puan verin, ücretsiz kullanmaya devam edin. Şimdi puan verdiğinizde 2 kez daha deneyebilirsiniz.',
-                  style: TextStyle(color: Color(0xFFBDBDBD)),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Puan verin, ücretsiz kullanmaya devam edin.',
+                        style: TextStyle(color: Color(0xFFBDBDBD)),
                       ),
-                    ),
-                    onPressed: () async {
-                      try {
-                        final inAppReview = InAppReview.instance;
-                        final avail = await inAppReview.isAvailable();
-                        if (avail) {
-                          await inAppReview.requestReview();
-                        }
-                        // Not: iOS prompt dönüş değeri yok; devam izni veriyoruz.
-                        if (Navigator.of(ctx).canPop()) {
-                          Navigator.of(ctx).pop(true);
-                        }
-                      } catch (_) {
-                        // Prompt açılamasa da kullanıcıyı engellemeyelim
-                        if (Navigator.of(ctx).canPop()) {
-                          Navigator.of(ctx).pop(true);
-                        }
-                      }
-                    },
-                    child: const Text(
-                      'Puan ver ve devam et',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green[700],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () async {
+                            try {
+                              final inAppReview = InAppReview.instance;
+                              final avail = await inAppReview.isAvailable();
+                              if (avail) {
+                                await inAppReview.requestReview();
+                              }
+                              Navigator.of(ctx).pop(true);
+                            } catch (_) {
+                              Navigator.of(ctx).pop(true);
+                            }
+                          },
+                          child: const Text(
+                            'Puan ver ücretsiz kullan',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(ctx).pop(false);
+                          },
+                          child: const Text('Daha sonra'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop(false);
-                    },
-                    child: const Text('Daha sonra'),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         );
