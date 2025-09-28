@@ -554,18 +554,17 @@ class _MainScreenState extends State<MainScreen> {
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(
-              maxWidth: 520,
+              maxWidth: 360,
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Material(
                 color: Colors.transparent,
-                child: Container
-                  (
-                  padding: const EdgeInsets.all(16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white.withOpacity(0.08)),
                   ),
                   child: Column(
@@ -579,26 +578,26 @@ class _MainScreenState extends State<MainScreen> {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       const Text(
                         'Puan verin, ücretsiz kullanmaya devam edin.',
-                        style: TextStyle(color: Color(0xFFBDBDBD)),
+                        style: TextStyle(color: Color(0xFFBDBDBD), fontSize: 13),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
-                        height: 48,
+                        height: 42,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green[700],
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           onPressed: () async {
@@ -615,18 +614,21 @@ class _MainScreenState extends State<MainScreen> {
                           },
                           child: const Text(
                             'Puan ver ücretsiz kullan',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       SizedBox(
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () {
                             Navigator.of(ctx).pop(false);
                           },
-                          child: const Text('Daha sonra'),
+                          child: const Text(
+                            'Daha sonra',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
                       ),
                     ],
