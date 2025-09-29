@@ -517,10 +517,12 @@ class _MainScreenState extends State<MainScreen> {
       final done = prefs.getBool(StorageKeys.ratingPromptCompleted) ?? false;
       if (!done) {
         final allowed = await _showRatingGateCard();
-        if (!allowed) {
-          return false; // Kart kapatıldı, devam etme
+        if (allowed) {
+          // Kullanıcı puanlama akışını onayladı; bir sonraki tıkta devam etsin
+          await prefs.setBool(StorageKeys.ratingPromptCompleted, true);
         }
-        await prefs.setBool(StorageKeys.ratingPromptCompleted, true);
+        // İlk tıkta galeriyi açma; kart gösterildiyse her durumda dur.
+        return false;
       }
     }
 
