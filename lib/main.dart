@@ -574,7 +574,7 @@ class _MainScreenState extends State<MainScreen> {
                       const Align(
                         alignment: Alignment.center,
                         child: Text(
-                          'Uygulamayı beğendiniz mi?',
+                          'Do you like the app?',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white,
@@ -585,7 +585,7 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Puan verin, ücretsiz kullanmaya devam edin.',
+                        'Rate us to keep using for free.',
                         style: TextStyle(color: Color(0xFFBDBDBD), fontSize: 13),
                       ),
                       const SizedBox(height: 12),
@@ -613,7 +613,7 @@ class _MainScreenState extends State<MainScreen> {
                             }
                           },
                           child: const Text(
-                            'Puan ver ücretsiz kullan',
+                            'Rate to continue for free',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                           ),
                         ),
@@ -626,7 +626,7 @@ class _MainScreenState extends State<MainScreen> {
                             Navigator.of(ctx).pop(false);
                           },
                           child: const Text(
-                            'Daha sonra',
+                            'Maybe later',
                             style: TextStyle(fontSize: 13),
                           ),
                         ),
