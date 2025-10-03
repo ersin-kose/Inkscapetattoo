@@ -28,8 +28,6 @@
 	<array>
 		<string>pinterest</string>
 	</array>
-	<key>AppGroupId</key>
-	<string>$(CUSTOM_GROUP_ID)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

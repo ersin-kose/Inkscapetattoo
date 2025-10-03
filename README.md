@@ -11,9 +11,7 @@ A Flutter app to try tattoos on your photos.
 
 ### iOS Setup
 
-- Project includes a Share Extension. In Xcode set a valid App Group for both Runner and Share Extension targets:
-  - Build Settings → `CUSTOM_GROUP_ID` → e.g. `group.com.yourcompany.inkscape`
-  - Ensure the same App Group is enabled in both targets’ Signing & Capabilities.
+- Share Extension ve App Groups şu an devre dışı. iOS'ta paylaşım uzantısına ihtiyaç yoksa ek ayar gerekmiyor. Kullanmak isterseniz App Group tanımlayıp etkinleştirilmesi gerekir.
 
 ### Android Setup
 
