@@ -1,16 +1,20 @@
 # inkscape_app
 
-A new Flutter project.
+A Flutter app to try tattoos on your photos.
 
-## Getting Started
+## Pinterest Tattoo Selection
 
-This project is a starting point for a Flutter application.
+- Tap `TATTOO` to open the in‑app Pinterest browser. Open a pin and tap “Bu dövmeyi kullan”.
+- Or simply tap the photo area to open the in-app web browser and pick a tattoo from Pinterest; choose a pin and tap “Bu dövmeyi kullan”.
+- The app receives the shared image (Android via Share Intent; iOS via Share Extension) and overlays it on your photo.
+- If a Pinterest link is shared instead of a file, the app will resolve the image via Open Graph/Twitter meta tags.
 
-A few resources to get you started if this is your first Flutter project:
+### iOS Setup
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Project includes a Share Extension. In Xcode set a valid App Group for both Runner and Share Extension targets:
+  - Build Settings → `CUSTOM_GROUP_ID` → e.g. `group.com.yourcompany.inkscape`
+  - Ensure the same App Group is enabled in both targets’ Signing & Capabilities.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Android Setup
+
+- AndroidManifest already declares `SEND`/`SEND_MULTIPLE` intent-filters for `image/*` and `text/plain` and INTERNET permission.

@@ -29,10 +29,27 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
+  use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
     inherit! :search_paths
+  end
+
+  # Share Extension is the name of your extension target created in Xcode.
+  # Conditionally include to avoid pod install failing when the Xcode target is missing.
+  begin
+    project_file = File.join('Runner.xcodeproj', 'project.pbxproj')
+    has_share_extension = File.exist?(project_file) && File.read(project_file).include?('Share Extension')
+    if has_share_extension
+      target 'Share Extension' do
+        inherit! :search_paths
+      end
+    else
+      puts '[Podfile] Skipping Share Extension target because it was not found in Runner.xcodeproj.'
+    end
+  rescue => e
+    puts "[Podfile] Skipping Share Extension target due to check error: #{e}"
   end
 end
 

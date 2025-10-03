@@ -19,6 +19,14 @@ class PremiumAccess {
 
   Future<void> init() async {
     if (_initialized) return;
+    // Web'de RevenueCat desteklenmiyor; platform sorgularına girmeden çık.
+    if (kIsWeb) {
+      debugPrint('[PremiumAccess] Web platform: purchases disabled.');
+      _initialized = true;
+      _enabled = false;
+      return;
+    }
+
     final String? apiKey = Platform.isIOS
         ? rcApiKeyIos
         : Platform.isAndroid
@@ -56,6 +64,10 @@ class PremiumAccess {
   bool get isPremium => _isPremium;
 
   Future<bool> refreshEntitlementActive() async {
+    // Web veya devre dışı durumda, mevcut önbellek değerini döndür.
+    if (kIsWeb || !_enabled) {
+      return _isPremium;
+    }
     try {
       final info = await Purchases.getCustomerInfo();
       final active = _computePremium(info);

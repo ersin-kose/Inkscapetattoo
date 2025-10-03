@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -15,10 +17,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:in_app_review/in_app_review.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'profile_screen.dart';
 import 'premium_screen.dart';
 import 'storage_keys.dart';
 import 'services/premium_access.dart';
+import 'pinterest_browser.dart';
 
 // Silgi path'i ve boyutunu saklayan sınıf
 class EraserPath {
@@ -30,7 +34,10 @@ class EraserPath {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await PremiumAccess.instance.init();
+  // Web'de satın alma/premium başlatma atlanır.
+  if (!kIsWeb) {
+    await PremiumAccess.instance.init();
+  }
   runApp(const MyApp());
 }
 
@@ -147,9 +154,12 @@ class _MainScreenState extends State<MainScreen> {
   double _eraserSize = 30.0; // Silgi boyutu
   final ValueNotifier<int> _repaintNotifier = ValueNotifier<int>(0);
 
+  // Receive shared media/text (Pinterest share)
+  StreamSubscription<List<SharedMediaFile>>? _mediaStreamSub;
+
   Future<void> _pickImage() async {
     // iOS'ta galeriye erişmeden önce sistem (Photos) izin kartını iste
-    if (Platform.isIOS) {
+    if (!kIsWeb && Platform.isIOS) {
       final perm = await PhotoManager.requestPermissionExtend();
       if (!perm.isAuth) {
         if (!mounted) return;
@@ -421,7 +431,7 @@ class _MainScreenState extends State<MainScreen> {
 
       bool ok = false;
 
-      if (Platform.isAndroid) {
+      if (!kIsWeb && Platform.isAndroid) {
         MediaStore.ensureInitialized();
         MediaStore.appFolder = 'InkScape';
 
@@ -436,7 +446,7 @@ class _MainScreenState extends State<MainScreen> {
           dirName: DirName.pictures,
         );
         ok = info?.isSuccessful ?? false;
-      } else if (Platform.isIOS) {
+      } else if (!kIsWeb && Platform.isIOS) {
         final perm = await PhotoManager.requestPermissionExtend();
         if (!perm.isAuth) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -451,6 +461,11 @@ class _MainScreenState extends State<MainScreen> {
           title: 'InkScape',
         );
         ok = entity != null;
+      } else {
+        // Web veya desteklenmeyen platformlarda galeriye kaydetme desteklenmiyor
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Save to gallery is not supported on this platform')),
+        );
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -469,6 +484,7 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _checkLoginStatus();
+    _initShareIntentHandling();
   }
 
   Future<void> _checkLoginStatus() async {
@@ -669,8 +685,222 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
+    _mediaStreamSub?.cancel();
     _repaintNotifier.dispose();
     super.dispose();
+  }
+
+  void _initShareIntentHandling() {
+    // Stream for receiving media while the app is running
+    _mediaStreamSub = ReceiveSharingIntent.instance.getMediaStream().listen(
+      (List<SharedMediaFile> value) {
+        _handleSharedMedia(value);
+      },
+      onError: (_) {},
+    );
+
+    // Check if app was launched via share (cold start)
+    ReceiveSharingIntent.instance.getInitialMedia().then((value) {
+      if (value != null && value.isNotEmpty) {
+        _handleSharedMedia(value);
+        // Reset so we don't get duplicates next time
+        ReceiveSharingIntent.instance.reset();
+      }
+    });
+  }
+
+  Future<void> _handleSharedMedia(List<SharedMediaFile> media) async {
+    if (media.isEmpty) return;
+
+    // Try image first
+    final image = media.firstWhere(
+      (m) => m.type == SharedMediaType.image ||
+          m.path.toLowerCase().endsWith('.png') ||
+          m.path.toLowerCase().endsWith('.jpg') ||
+          m.path.toLowerCase().endsWith('.jpeg'),
+      orElse: () => SharedMediaFile(path: '', type: SharedMediaType.text),
+    );
+
+    if (image.path.isNotEmpty) {
+      try {
+        final file = File(image.path);
+        if (!await file.exists()) return;
+
+        final canUseTattoo = await _ensureTattooAccess();
+        if (!canUseTattoo) return;
+
+        if (!_isPremiumUser) {
+          await _incrementTattooUsage();
+        }
+
+        setState(() {
+          _selectedTattooImage = file;
+          _tattooImageBytes = null;
+        });
+        await _removeBackground();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tattoo received from share')),
+        );
+        return;
+      } catch (_) {}
+    }
+
+    // Fallback: check for a shared link/text
+    final textItem = media.firstWhere(
+      (m) => m.type == SharedMediaType.text,
+      orElse: () => SharedMediaFile(path: '', type: SharedMediaType.text),
+    );
+    if (textItem.path.isNotEmpty) {
+      _handleSharedText(textItem.path);
+    }
+  }
+
+  Future<void> _handleSharedText(String text) async {
+    // Accept Pinterest or any webpage link and try to resolve to a real image URL
+    final link = text.trim();
+    final uri = Uri.tryParse(link);
+    if (uri == null) return;
+
+    // Direct image link
+    if (uri.path.toLowerCase().endsWith('.png') ||
+        uri.path.toLowerCase().endsWith('.jpg') ||
+        uri.path.toLowerCase().endsWith('.jpeg') ||
+        uri.host.toLowerCase().contains('i.pinimg.com')) {
+      await _tryLoadImageFromUrl(uri.toString());
+      return;
+    }
+
+    // Try to extract image from the web page (Open Graph/Twitter tags), useful for Pinterest share links
+    final resolved = await _resolveSharedLinkToImageUrl(uri.toString());
+    if (resolved != null) {
+      await _tryLoadImageFromUrl(resolved);
+    }
+  }
+
+  Future<String?> _resolveSharedLinkToImageUrl(String url) async {
+    try {
+      final client = HttpClient();
+      client.userAgent = 'Mozilla/5.0 (Flutter)';
+      final req = await client.getUrl(Uri.parse(url));
+      req.followRedirects = true;
+      req.maxRedirects = 5;
+      final resp = await req.close();
+      if (resp.statusCode >= 300 && resp.statusCode < 400) {
+        final loc = resp.headers.value(HttpHeaders.locationHeader);
+        if (loc != null) {
+          return await _resolveSharedLinkToImageUrl(loc);
+        }
+      }
+
+      if (resp.statusCode != 200) return null;
+      final bytes = await consolidateHttpClientResponseBytes(resp);
+      final html = String.fromCharCodes(bytes);
+
+      // Quick parse for common meta tags
+      final candidates = <String?>[
+        _extractMetaContent(html, 'property', 'og:image'),
+        _extractMetaContent(html, 'name', 'og:image'),
+        _extractMetaContent(html, 'property', 'twitter:image'),
+        _extractMetaContent(html, 'name', 'twitter:image'),
+      ].whereType<String>().toList();
+
+      for (final c in candidates) {
+        final u = Uri.tryParse(c);
+        if (u != null) {
+          // Prefer direct images
+          if (u.path.toLowerCase().endsWith('.png') ||
+              u.path.toLowerCase().endsWith('.jpg') ||
+              u.path.toLowerCase().endsWith('.jpeg') ||
+              u.host.toLowerCase().contains('i.pinimg.com')) {
+            return u.toString();
+          }
+        }
+      }
+
+      // Fallback: find any <img ... src="...pinimg.com...">
+      final imgRegex = RegExp(r'<img[^>]+src=["\"](.*?)["\"][^>]*>', caseSensitive: false);
+      for (final m in imgRegex.allMatches(html)) {
+        final src = m.group(1);
+        if (src == null) continue;
+        if (src.contains('i.pinimg.com') ||
+            src.toLowerCase().endsWith('.png') ||
+            src.toLowerCase().endsWith('.jpg') ||
+            src.toLowerCase().endsWith('.jpeg')) {
+          return src;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  String? _extractMetaContent(String html, String key, String value) {
+    final re = RegExp(
+      '<meta[^>]*$key=["\"]$value["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>',
+      caseSensitive: false,
+    );
+    final match = re.firstMatch(html);
+    return match?.group(1);
+  }
+
+  Future<void> _tryLoadImageFromUrl(String url) async {
+    try {
+      final canUseTattoo = await _ensureTattooAccess();
+      if (!canUseTattoo) return;
+
+      final client = HttpClient();
+      client.userAgent = 'Mozilla/5.0 (Flutter)';
+      final req = await client.getUrl(Uri.parse(url));
+      final resp = await req.close();
+      if (resp.statusCode != 200) return;
+      final bytes = await consolidateHttpClientResponseBytes(resp);
+      final tempDir = Directory.systemTemp;
+      final out = File(
+        '${tempDir.path}/shared_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      await out.writeAsBytes(bytes);
+
+      if (!_isPremiumUser) {
+        await _incrementTattooUsage();
+      }
+
+      setState(() {
+        _selectedTattooImage = out;
+        _tattooImageBytes = null;
+      });
+      await _removeBackground();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tattoo loaded from link')),
+      );
+    } catch (_) {}
+  }
+
+  // External Pinterest flow removed. Using in-app browser instead.
+
+  Future<void> _openPinterestInApp() async {
+    final canUseTattoo = await _ensureTattooAccess();
+    if (!canUseTattoo) return;
+
+    final selectedUrl = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => const PinterestBrowserPage(),
+        fullscreenDialog: true,
+      ),
+    );
+    if (selectedUrl == null || selectedUrl.isEmpty) return;
+
+    await _handleSharedText(selectedUrl);
+    if (!mounted) return;
+    if (_selectedTattooImage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tattoo imported from web')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Görsel alınamadı. Pin sayfasını açıp tekrar deneyin.')),
+      );
+    }
   }
 
   @override
@@ -912,7 +1142,7 @@ class _MainScreenState extends State<MainScreen> {
               height: (MediaQuery.of(context).size.height * 0.7).floorToDouble(),
               decoration: BoxDecoration(color: Colors.black87),
               child: GestureDetector(
-                onScaleStart: (ScaleStartDetails details) {
+                onScaleStart: _selectedTattooImage != null ? (ScaleStartDetails details) {
                   _lastPointerCount = details.pointerCount;
                   if (details.pointerCount == 1) {
                     if (_selectedTattooImage != null) {
@@ -970,8 +1200,8 @@ class _MainScreenState extends State<MainScreen> {
                     _initialRotation = _tattooRotation;
                     _isDraggingTattoo = false;
                   }
-                },
-                onScaleUpdate: (ScaleUpdateDetails details) {
+                } : null,
+                onScaleUpdate: _selectedTattooImage != null ? (ScaleUpdateDetails details) {
                   // Pointer sayısı değiştiyse geçişleri yönet
                   if (details.pointerCount != _lastPointerCount) {
                     if (details.pointerCount > 1 && _lastPointerCount <= 1) {
@@ -1048,8 +1278,8 @@ class _MainScreenState extends State<MainScreen> {
                       }
                     });
                   }
-                },
-                onScaleEnd: (ScaleEndDetails details) {
+                } : null,
+                onScaleEnd: _selectedTattooImage != null ? (ScaleEndDetails details) {
                   // Silme modundaysak, path'i kaydet
                   if (_isErasing && _currentPath != null) {
                     setState(() {
@@ -1071,7 +1301,7 @@ class _MainScreenState extends State<MainScreen> {
                     _isDraggingTattoo = false;
                   }
                   _lastPointerCount = 0;
-                },
+                } : null,
                 child: Stack(
                   children: [
                     // Arka plan fotoğrafı
@@ -1103,6 +1333,45 @@ class _MainScreenState extends State<MainScreen> {
                               textAlign: TextAlign.center,
                             ),
                           ],
+                        ),
+                      ),
+
+                    // Fotoğraf alanına dokununca Web’den içe aktar (yalnızca dövme yoksa ve arka plan fotoğrafı varsa)
+                    if (_selectedTattooImage == null && _selectedImage != null)
+                      Positioned.fill(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _openPinterestInApp,
+                          ),
+                        ),
+                      ),
+
+                    // İpucu metni: küçük alt bilgi
+                    if (_selectedImage != null && _selectedTattooImage == null)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 12,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(Icons.touch_app, size: 16, color: Colors.white70),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Dövme seçmek için fotoğrafa dokunun',
+                                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
 
@@ -1257,7 +1526,7 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ] else if (_selectedTattooImage == null) ...[
                         ElevatedButton(
-                          onPressed: _pickTattooImage,
+                          onPressed: _openPinterestInApp,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green[900],
                             foregroundColor: Colors.white,
@@ -1420,7 +1689,7 @@ class _MainScreenState extends State<MainScreen> {
                             child: SizedBox(
                               height: 48,
                               child: ElevatedButton(
-                                onPressed: _pickTattooImage,
+                                onPressed: _openPinterestInApp,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.green[900],
                                   foregroundColor: Colors.white,

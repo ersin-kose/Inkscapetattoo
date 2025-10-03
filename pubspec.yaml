@@ -46,6 +46,8 @@ dependencies:
   purchases_flutter: ^9.6.1
   material_symbols_icons: ^4.2873.0
   in_app_review: ^2.0.8
+  receive_sharing_intent: ^1.8.0
+  webview_flutter: ^4.7.0
 
 dev_dependencies:
   flutter_test:
