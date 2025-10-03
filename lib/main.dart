@@ -534,11 +534,14 @@ class _MainScreenState extends State<MainScreen> {
       if (!done) {
         final allowed = await _showRatingGateCard();
         if (allowed) {
-          // Kullanıcı puanlama akışını onayladı; bir sonraki tıkta devam etsin
+          // Kullanıcı puanlama akışını onayladı; devam etmeye izin ver
           await prefs.setBool(StorageKeys.ratingPromptCompleted, true);
+          // Not: Limit kontrolünü atlamamak için burada return etmiyoruz.
+          // Aşağıdaki limit kontrolüne düşsün.
+        } else {
+          // Onay vermediyse bu denemeyi durdur
+          return false;
         }
-        // İlk tıkta galeriyi açma; kart gösterildiyse her durumda dur.
-        return false;
       }
     }
 
