@@ -171,12 +171,6 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Web’den içe aktar'),
-        actions: [
-          TextButton(
-            onPressed: _onPickPressed,
-            child: const Text('Bu dövmeyi kullan'),
-          ),
-        ],
       ),
       body: Stack(
         children: [
