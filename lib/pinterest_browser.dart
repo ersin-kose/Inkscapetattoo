@@ -4,7 +4,10 @@ import 'package:webview_flutter/webview_flutter.dart';
 class PinterestBrowserPage extends StatefulWidget {
   final String initialUrl;
 
-  const PinterestBrowserPage({super.key, this.initialUrl = 'https://www.pinterest.com/search/pins/?q=tattoo'});
+  const PinterestBrowserPage({
+    super.key,
+    this.initialUrl = 'https://www.pinterest.com/search/pins/?q=tattoo%20isolated%20background',
+  });
 
   @override
   State<PinterestBrowserPage> createState() => _PinterestBrowserPageState();
