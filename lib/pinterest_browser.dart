@@ -185,9 +185,50 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
           child: Row(
             children: [
               Expanded(
-                child: ElevatedButton(
-                  onPressed: _onPickPressed,
-                  child: const Text('Bu dövmeyi kullan'),
+                child: SizedBox(
+                  height: 52,
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x33000000),
+                            blurRadius: 12,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: _onPickPressed,
+                        child: const Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add, size: 20, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text(
+                                'try tattoo',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
