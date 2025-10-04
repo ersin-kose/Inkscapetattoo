@@ -139,6 +139,12 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
+      ..addJavaScriptChannel('PICK', onMessageReceived: (JavaScriptMessage msg) {
+        final url = (msg.message ?? '').toString();
+        if (url.isEmpty) return;
+        if (!mounted) return;
+        Navigator.of(context).pop(url);
+      })
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
@@ -152,6 +158,7 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
               _loading = false;
               _currentUrl = url;
             });
+            _injectClickPicker();
           },
           onNavigationRequest: (request) {
             // Allow https/http inside webview; block custom schemes to avoid crashes
@@ -164,6 +171,104 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
         ),
       )
       ..loadRequest(Uri.parse(widget.initialUrl));
+  }
+
+  void _injectClickPicker() {
+    final js = r"""
+      (function(){
+        if (window.__INK_PICKER_INSTALLED__) return; 
+        window.__INK_PICKER_INSTALLED__ = true;
+        function abs(u){ try { return u ? new URL(u, location.href).toString() : ''; } catch(e){ return u||''; } }
+        function fromSrcSet(ss){
+          if (!ss) return '';
+          try {
+            const parts = ss.split(',').map(s=>s.trim()).filter(Boolean);
+            const last = parts[parts.length-1]||'';
+            const url = last.split(' ')[0];
+            return abs(url);
+          } catch(e){ return ''; }
+        }
+        function collectFromNode(node){
+          const out=[];
+          if (!node) return out;
+          const set = new Set();
+          let n=node; for (let i=0;i<5 && n;i++){ set.add(n); n=n.parentElement; }
+          const within = [];
+          try {
+            if (node.querySelectorAll){ within.push(node, ...node.querySelectorAll('*')); }
+          } catch(e){}
+          const all = Array.from(new Set([...within, ...set]));
+          for (const el of all){
+            try {
+              if (el.tagName && el.tagName.toLowerCase()==='img'){
+                const srcs=[];
+                if (el.currentSrc) srcs.push(el.currentSrc);
+                if (el.src) srcs.push(el.src);
+                if (el.srcset) srcs.push(fromSrcSet(el.srcset));
+                const u = srcs.find(Boolean);
+                if (u){
+                  const w = el.naturalWidth || el.width || 0;
+                  const h = el.naturalHeight || el.height || 0;
+                  out.push({u: abs(u), w, h});
+                }
+              }
+              const style = getComputedStyle(el);
+              const bg = (style && style.backgroundImage) || '';
+              const m = bg && bg.match(/url\((['\"]?)(.*?)\1\)/i);
+              if (m && m[2]){
+                out.push({u: abs(m[2]), w: el.clientWidth||0, h: el.clientHeight||0});
+              }
+            } catch(e){}
+          }
+          return out;
+        }
+        function score(c){
+          const u = (c.u||'').toLowerCase();
+          let s = 0;
+          if (u.includes('i.pinimg.com')) s += 5;
+          if (u.includes('/originals/')) s += 6;
+          if (u.includes('/736x/')) s += 5;
+          if (u.includes('/474x/')) s += 4;
+          if (u.includes('/236x/')) s += 3;
+          if (u.match(/\.(png|jpe?g)(\?|$)/)) s += 2;
+          if (u.includes('s.pinimg.com') || u.includes('/rs/')) s -= 4;
+          const area = (c.w||0)*(c.h||0);
+          if (area > 0) s += Math.min(10, Math.floor(area/50000));
+          if ((c.w||0) < 100 || (c.h||0) < 100) s -= 3;
+          return s;
+        }
+        function pickForTarget(target){
+          const set = new Map();
+          for (const c of collectFromNode(target)){
+            if (!set.has(c.u)) set.set(c.u, c);
+          }
+          const arr = Array.from(set.values());
+          arr.sort((a,b)=>score(b)-score(a));
+          return arr.length ? arr[0].u : '';
+        }
+        function shouldPick(url){
+          if (!url) return false;
+          const u = url.toLowerCase();
+          if (u.includes('i.pinimg.com')) return true;
+          if (u.match(/\.(png|jpe?g)(\?|$)/)) return true;
+          return false;
+        }
+        function handler(e){
+          try {
+            const url = pickForTarget(e.target);
+            if (shouldPick(url)){
+              if (window.PICK && window.PICK.postMessage){
+                window.PICK.postMessage(url);
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }
+          } catch(err) {}
+        }
+        document.addEventListener('click', handler, true);
+      })();
+    """;
+    _controller.runJavaScript(js);
   }
 
   @override
@@ -186,41 +291,42 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 52,
+                  height: 44,
                   child: Material(
                     color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     child: Ink(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         gradient: const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Color(0xFF22C55E), Color(0xFF16A34A)],
+                          colors: [Color(0xFF34D399), Color(0xFF10B981)],
                         ),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0x33000000),
-                            blurRadius: 12,
-                            offset: Offset(0, 8),
+                            color: Color(0x1A000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         onTap: _onPickPressed,
                         child: const Center(
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.add, size: 20, color: Colors.white),
+                              Icon(Icons.add, size: 18, color: Colors.white),
                               SizedBox(width: 8),
                               Text(
                                 'try tattoo',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
                                 ),
                               ),
                             ],
