@@ -98,7 +98,7 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
         })();
       """;
       final raw = await _controller.runJavaScriptReturningResult(js);
-      var s = raw?.toString() ?? '';
+      var s = raw.toString();
       // webview_flutter returns quoted JSON string sometimes
       if (s.startsWith('"') && s.endsWith('"') && s.length >= 2) {
         s = s.substring(1, s.length - 1);
@@ -140,7 +140,7 @@ class _PinterestBrowserPageState extends State<PinterestBrowserPage> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000))
       ..addJavaScriptChannel('PICK', onMessageReceived: (JavaScriptMessage msg) {
-        final url = (msg.message ?? '').toString();
+        final url = msg.message;
         if (url.isEmpty) return;
         if (!mounted) return;
         Navigator.of(context).pop(url);

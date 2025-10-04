@@ -17,7 +17,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
   bool _loading = true;
   DateTime? _premiumExpiration;
   String? _priceString;
-  Package? _monthlyPackage;
 
   @override
   void initState() {
@@ -52,7 +51,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
     if (!mounted) return;
     setState(() {
       _isPremium = hasRcPremium;
-      _monthlyPackage = pkg;
       _priceString = price;
       _loading = false;
     });
@@ -100,11 +98,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
     const bgDark = Color(0xFF0B0F14);
     const cardStroke = Color(0x14FFFFFF);
     const textMuted = Color(0xFF9CA3AF);
-    const success = Color(0xFF10B981);
-    const gold1 = Color(0xFFF3C77A);
-    const gold2 = Color(0xFFDAA520);
     final formattedExpiry = _formatExpiration(_premiumExpiration);
-    final bool hasExpiredPremium = false; // RC ile süreyi biz tutmuyoruz
+    // RC ile süreyi biz tutmuyoruz
 
     return Scaffold(
       backgroundColor: bgDark,
@@ -288,19 +283,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       Text(
                         'Your Premium membership is active until $formattedExpiry.',
                         style: const TextStyle(fontSize: 14, color: textMuted),
-                        textAlign: TextAlign.center,
-                      ),
-                    ] else if (hasExpiredPremium && formattedExpiry != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        'Your Premium subscription ended on $formattedExpiry.',
-                        style: const TextStyle(fontSize: 14, color: textMuted),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Subscribe again to regain unlimited access.',
-                        style: TextStyle(fontSize: 12, color: textMuted),
                         textAlign: TextAlign.center,
                       ),
                     ],

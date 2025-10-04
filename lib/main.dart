@@ -127,7 +127,6 @@ class _MainScreenState extends State<MainScreen> {
   File? _selectedTattooImage; // Overlay (işlenecek)
   Uint8List? _tattooImageBytes; // Önceden yüklenmiş dövme görseli
   final ImagePicker _picker = ImagePicker();
-  bool _isProcessing = false;
   bool _isLoggedIn = false;
   static const int _freeTattooUsageLimit = 5;
   int _tattooUsageCount = 0;
@@ -187,39 +186,16 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
-  Future<void> _pickTattooImage() async {
-    final canUseTattoo = await _ensureTattooAccess();
-    if (!canUseTattoo) {
-      return;
-    }
-
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      if (!_isPremiumUser) {
-        await _incrementTattooUsage();
-      }
-
-      setState(() {
-        _selectedTattooImage = File(image.path);
-        _tattooImageBytes = null; // Önceki görseli temizle
-      });
-
-      // Dövme yüklendikten sonra otomatik olarak arka plan temizleme işlemini başlat
-      _removeBackground();
-    }
-  }
+  
 
   /// Parlak pikselleri şeffaf yapar (tek seferlik CPU işlemi)
   Future<void> _removeBackground() async {
     if (_selectedTattooImage == null) return;
 
-    setState(() => _isProcessing = true);
-
     try {
       final Uint8List bytes = await _selectedTattooImage!.readAsBytes();
       final decoded = img.decodeImage(bytes);
       if (decoded == null) {
-        setState(() => _isProcessing = false);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Unable to process photo')));
@@ -307,7 +283,6 @@ class _MainScreenState extends State<MainScreen> {
       setState(() {
         _selectedTattooImage = out;
         _tattooImageBytes = loadedBytes;
-        _isProcessing = false;
 
         _tattooScale = 1.0;
         final screenWidth = MediaQuery.of(context).size.width;
@@ -333,7 +308,7 @@ class _MainScreenState extends State<MainScreen> {
 
       
     } catch (e) {
-      setState(() => _isProcessing = false);
+      // no-op
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -450,12 +425,12 @@ class _MainScreenState extends State<MainScreen> {
           return;
         }
 
-        final entity = await PhotoManager.editor.saveImage(
+        await PhotoManager.editor.saveImage(
           jpgBytes,
           filename: name,
           title: 'InkScape',
         );
-        ok = entity != null;
+        ok = true;
       } else {
         // Web veya desteklenmeyen platformlarda galeriye kaydetme desteklenmiyor
         ScaffoldMessenger.of(context).showSnackBar(
@@ -699,7 +674,7 @@ class _MainScreenState extends State<MainScreen> {
 
     // Check if app was launched via share (cold start)
     ReceiveSharingIntent.instance.getInitialMedia().then((value) {
-      if (value != null && value.isNotEmpty) {
+      if (value.isNotEmpty) {
         _handleSharedMedia(value);
         // Reset so we don't get duplicates next time
         ReceiveSharingIntent.instance.reset();
