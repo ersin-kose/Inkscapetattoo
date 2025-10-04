@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:media_store_plus/media_store_plus.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'dart:async';
@@ -97,7 +96,6 @@ class _MyAppState extends State<MyApp> {
               primary: Colors.grey[800]!,
               secondary: Colors.grey[600]!,
               surface: Colors.grey[900]!,
-              background: Colors.black,
             ),
             scaffoldBackgroundColor: Colors.black,
             appBarTheme: const AppBarTheme(
@@ -300,11 +298,12 @@ class _MainScreenState extends State<MainScreen> {
         _repaintNotifier.value++;
       });
 
-      // ignore: avoid_print
       final size = await out.length();
-      print(
-        'avgLum=$avgLum  lowerThreshold=$lowerThreshold  upperThreshold=$upperThreshold  transparent=$transparentPixels  semiTransparent=$semiTransparentPixels/$totalPixels  bytes=$size',
-      );
+      if (kDebugMode) {
+        // Debug metrics for background removal
+        // ignore: avoid_print
+        print('avgLum=$avgLum  lowerThreshold=$lowerThreshold  upperThreshold=$upperThreshold  transparent=$transparentPixels  semiTransparent=$semiTransparentPixels/$totalPixels  bytes=$size');
+      }
 
       
     } catch (e) {
@@ -556,7 +555,7 @@ class _MainScreenState extends State<MainScreen> {
                   decoration: BoxDecoration(
                     color: Colors.grey[900],
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -808,10 +807,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   String? _extractMetaContent(String html, String key, String value) {
-    final re = RegExp(
-      '<meta[^>]*$key=["\"]$value["\"][^>]*content=["\"]([^"\"]+)["\"][^>]*>',
-      caseSensitive: false,
-    );
+    final re = RegExp(r'''<meta[^>]*$key=["']$value["'][^>]*content=["']([^"']+)["'][^>]*>''', caseSensitive: false);
     final match = re.firstMatch(html);
     return match?.group(1);
   }
@@ -901,11 +897,11 @@ class _MainScreenState extends State<MainScreen> {
                     backgroundColor: Colors.grey[900],
                     title: const Text(
                       'About Inkscape',
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white),
                     ),
                     content: const Text(
                       'Inkscape is a digital tattoo application that allows you to apply tattoos to your photos. You can upload tattoo images, position them, scale them, and erase parts as needed.',
-                      style: const TextStyle(color: Color(0xFFBDBDBD)),
+                      style: TextStyle(color: Color(0xFFBDBDBD)),
                     ),
                     actions: [
                       TextButton(
@@ -914,7 +910,7 @@ class _MainScreenState extends State<MainScreen> {
                         },
                         child: const Text(
                           'Close',
-                          style: const TextStyle(color: Colors.blue),
+                          style: TextStyle(color: Colors.blue),
                         ),
                       ),
                     ],
@@ -936,7 +932,7 @@ class _MainScreenState extends State<MainScreen> {
                           activeTrackColor: Colors.green[400],
                           inactiveTrackColor: Colors.grey[700],
                           thumbColor: Colors.green[400],
-                          overlayColor: Colors.green[400]?.withOpacity(0.3),
+                          overlayColor: Colors.green[400]?.withValues(alpha: 0.3),
                           trackHeight: 4,
                           thumbShape: const RoundSliderThumbShape(
                             enabledThumbRadius: 8,
@@ -1060,16 +1056,16 @@ class _MainScreenState extends State<MainScreen> {
                 (BuildContext context) => <PopupMenuEntry<String>>[
                   const PopupMenuItem<String>(
                     value: 'profile',
-                    child: const Text(
+                    child: Text(
                       'Profile',
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                   const PopupMenuItem<String>(
                     value: 'premium',
-                    child: const Text(
+                    child: Text(
                       'Premium',
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
                   const PopupMenuItem<String>(
@@ -1090,9 +1086,9 @@ class _MainScreenState extends State<MainScreen> {
                     const PopupMenuDivider(),
                     const PopupMenuItem<String>(
                       value: 'logout',
-                      child: const Text(
+                      child: Text(
                         'Logout',
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -1825,7 +1821,7 @@ class EraserPainter extends CustomPainter {
     final image = _imageCache[key];
 
     if (image == null) {
-      final loadingPaint = Paint()..color = Colors.grey.withOpacity(0.3);
+      final loadingPaint = Paint()..color = Colors.grey.withValues(alpha: 0.3);
       canvas.drawRect(
         Rect.fromLTWH(0, 0, size.width, size.height),
         loadingPaint,

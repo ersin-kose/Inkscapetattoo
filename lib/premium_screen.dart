@@ -6,7 +6,7 @@ import 'services/premium_access.dart';
 import 'revenuecat_keys.dart';
 
 class PremiumScreen extends StatefulWidget {
-  const PremiumScreen({Key? key}) : super(key: key);
+  const PremiumScreen({super.key});
 
   @override
   State<PremiumScreen> createState() => _PremiumScreenState();
@@ -92,7 +92,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
       );
     }
 
-    final tsf = MediaQuery.of(context).textScaleFactor;
+    final tsf = MediaQuery.of(context).textScaler.scale(1.0);
     final double heroMinHeight = 220 + (40 * (tsf - 1.0)).clamp(0, 80);
     // Premium için modern minimal palet
     const bgDark = Color(0xFF0B0F14);
@@ -321,10 +321,9 @@ class _SubscribeButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const _SubscribeButton({
-    Key? key,
     required this.isPremium,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
