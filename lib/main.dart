@@ -331,12 +331,7 @@ class _MainScreenState extends State<MainScreen> {
         'avgLum=$avgLum  lowerThreshold=$lowerThreshold  upperThreshold=$upperThreshold  transparent=$transparentPixels  semiTransparent=$semiTransparentPixels/$totalPixels  bytes=$size',
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Background removed'),
-          duration: Duration(seconds: 3),
-        ),
-      );
+      
     } catch (e) {
       setState(() => _isProcessing = false);
       ScaffoldMessenger.of(
@@ -873,9 +868,7 @@ class _MainScreenState extends State<MainScreen> {
       });
       await _removeBackground();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tattoo loaded from link')),
-      );
+      
     } catch (_) {}
   }
 
@@ -896,9 +889,7 @@ class _MainScreenState extends State<MainScreen> {
     await _handleSharedText(selectedUrl);
     if (!mounted) return;
     if (_selectedTattooImage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tattoo imported from web')),
-      );
+      
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Görsel alınamadı. Pin sayfasını açıp tekrar deneyin.')),
